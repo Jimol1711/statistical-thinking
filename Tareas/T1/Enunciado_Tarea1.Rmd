@@ -95,9 +95,32 @@ En base al dataset propuesto realice un análisis exploratorio de los datos (EDA
 # Import and reading of csv file hearth_database.csv
 hearth_database <- read.table(file="hearth_database.csv",header=T,sep=",")
 
-# Obtaining of the mean for each numeric value
+# Making numeric values numeric
+for (col in names(hearth_database)) {
+  converted_col <- as.numeric(hearth_database[[col]])
+  
+  # If no NA values are introduced by the conversion, keep the numeric column
+  if (!any(is.na(converted_col)) || all(is.na(hearth_database[[col]]))) {
+    hearth_database[[col]] <- converted_col
+  }
+}
+
+# Obtaining of the mean for each numeric attribute
 # Calculate the mean of each numeric column
-means <- sapply(hearth_database,mean)
+means_all <- sapply(hearth_database, mean)
+
+# The mean of each numeric column is on the variable means
+means <- means_all[!is.na(means_all)]
+rm(means_all)
+
+# Obtaining of the median for each numeric attribute
+# Calculate the median of each numeric column
+medians_all <- sapply(hearth_database, median)
+
+# The median of each numeric column is on the variable medians
+medians <- medians_all[!is.na(medians_all)]
+rm(medians_all)
+
 
 ```
 ---
