@@ -11,8 +11,7 @@ output:
 <center><strong>CC6104: Statistical Thinking</strong></center>
 #### **Integrantes :** 
 
-- Alumno 1
-- Alumno 2
+- Juan Molina
 
 #### **Cuerpo Docente:**
 
@@ -91,7 +90,16 @@ En base al dataset propuesto realice un análisis exploratorio de los datos (EDA
 - [ ] Visualice a través de un histograma como distribuyen las variables respecto a los TARGET.
 
 **Respuesta**
+```{r eval=FALSE}
 
+# Import and reading of csv file hearth_database.csv
+hearth_database <- read.table(file="hearth_database.csv",header=T,sep=",")
+
+# Obtaining of the mean for each numeric value
+# Calculate the mean of each numeric column
+means <- sapply(hearth_database,mean)
+
+```
 ---
 
 ## Pregunta 2: Teorema Central del Limite
