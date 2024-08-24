@@ -90,30 +90,94 @@ En base al dataset propuesto realice un análisis exploratorio de los datos (EDA
 - [ ] Visualice a través de un histograma como distribuyen las variables respecto a los TARGET.
 
 **Respuesta**
-Primero debo aclarar que solo se calcularon El código que calcula las medias, medianas, quintiles y valores máximos es el siguiente.
+Se crean los vectores means, medians y maxes que contienen las medias, medianas y máximos respectivamente de las columnas numéricas. Esto se compara con lo dado por la función summary y vemos que se condice. Luego se calculan los quintiles y se guardan en el dataset quintils. El código utilizado es el siguiente:
+
 ```{r eval=FALSE}
+# Libraries installed to plot, correlation matrix and boxplots (run this code only once)
+install.packages("corrplot")
+install.packages("ggplot2")
+```
+
+```{r eval=TRUE}
+library(corrplot)
+library(ggplot2)
+
+# To avoid warning messages
+options(warn = -1)
 
 # Import and reading of csv file hearth_database.csv
 hearth_database <- read.table(file="hearth_database.csv",header=T,sep=",")
-hearth_database$slope <- as.numeric(hearth_database$slope)
-numeric_hearth_database <- hearth_database[!is.na(hearth_database$column_name), ]
 
-# Obtaining of the mean for each numeric attribute
-# Calculate the mean of each numeric column
+# Selecting of numeric attributes
+numeric_attrs <- c("slope", "ca", "thal", "age", "trestbps", "chol", "thalach", "oldpeak")
+
+# Obtaining of the mean, median and maxes for each numeric attribute
+# means, medians and maxes are saved on vectors of their respective names
+# Calculate the mean of each numeric attribute
 means_all <- sapply(hearth_database, mean)
-
-# The mean of each numeric column is on the variable means
-means <- means_all[!is.na(means_all)]
+means <- means_all[numeric_attrs]
 rm(means_all)
 
-# Obtaining of the median for each numeric attribute
-# Calculate the median of each numeric column
+# Calculate the median of each numeric attribute
 medians_all <- sapply(hearth_database, median)
-
-# The median of each numeric column is on the variable medians
-medians <- medians_all[!is.character(medians_all)]
+medians <- sapply(medians_all[numeric_attrs], as.numeric)
 rm(medians_all)
 
+# Calculate the maximum of each numeric attribute
+maxes_all <- sapply(hearth_database, max)
+maxes <- sapply(maxes_all[numeric_attrs], as.numeric)
+rm(maxes_all)
+
+# Calculate the quintils of each numeric attribute
+quintils <- lapply(hearth_database[numeric_attrs], function(col) {
+  quantile(col, probs=seq(0, 1, by = 0.2), na.rm=TRUE)
+})
+
+# Printing the vectors with the metric and quintils for each attribute
+print(means)
+print(medians)
+print(maxes)
+print(quintils)
+
+# Use of summary to compare
+summary(hearth_database)
+```
+
+Luego mostramos la matriz de correlación de Pearson para los atributos numéricos:
+
+```{r eval=TRUE}
+# Calculate the Pearson correlation matrix
+correlation_matrix <- cor(hearth_database[numeric_attrs], use="complete.obs", method="pearson")
+
+# Visualization of the correlation matrix
+corrplot(correlation_matrix, method="square")
+```
+Y creamos un boxplot para cada atributo numérico:
+
+```{r eval=TRUE}
+# Loop through each numeric attrbute and plot a boxplot
+for (col in names(hearth_database[numeric_attrs])) {
+  boxplot(hearth_database[col],main=paste("Boxplot of", col),xlab=col,ylab="Values")
+  rm(col)
+}
+```
+
+Finalmente mostramos mediante un histograma como distribuyen las variables respecto al TARGET:
+
+```{r eval=TRUE}
+# Separate the dataset into two subsets
+yes_target <- subset(hearth_database, target=="YES")
+no_target <- subset(hearth_database, target=="NO")
+
+# Loop through each numeric attrbute and plot a density histogram
+for (col in names(hearth_database[numeric_attrs])) {
+  plot(density(as.numeric(yes_target[[col]])), main=paste("Density of", col, "for targets with hearth problems"))
+  plot(density(as.numeric(no_target[[col]])), main=paste("Density of", col, "for targets without hearth problems"))
+  rm(col)
+}
+
+rm(yes_target)
+rm(no_target)
 ```
 ---
 
