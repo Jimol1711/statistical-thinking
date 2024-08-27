@@ -209,13 +209,32 @@ Realice el experimento de lanzar una moneda cargada 1000 veces y observe el comp
 **Respuesta**
 
 ```{r eval=TRUE}
+# Definir la probabilidad de salir cara
+prob_cara <- 5/8
+
+# Vector para almacenar la probabilidad estimada de salir cara en cada paso
+prob_estimada <- numeric(1000)
+
+# Simular lanzamientos
+num_caras <- 0
+
 # Simular lanzamientos
 for (lanzamientos in 1:1000) {
+  # Simular el lanzamiento de la moneda
+  if (runif(1) < prob_cara) {
+    num_caras <- num_caras + 1
+  }
   
+  # Calcular la probabilidad estimada hasta el lanzamiento actual
+  prob_estimada[lanzamientos] <- num_caras / lanzamientos
 }
 
 # Gráfico de la convergencia
+plot(1:1000, prob_estimada, type = "l", 
+     xlab = "Número de lanzamientos", ylab = "Probabilidad de cara",
+     main = "Convergencia de la probabilidad de cara")
 ```
+Podemos notar que la probabilidad de que salga cara converge cercano a 0.6, lo cual es a su vez cercano a 5/8.
 
 #### El problema de Monty Hall 
 
@@ -233,18 +252,51 @@ Imagine que usted es participante del concurso y desea calcular la probabilidad 
 **Respuesta:**
 
 ```{r eval=FALSE}
+# To avoid warning messages
+options(warn = -1)
+
 # Creamos una función que simule el juego
 montyhall <- function(cambiar = TRUE){
   Puertas <- sample(1:3,3)             #Puertas donde la posición que tiene el 3 es el premio
   posicion <- sample(1:3,1)            #Elección del participante.
   
-  return(Eleccion) # Retornamos la elección, esta puede que tenga el premio o no
+  puertas_abiertas <- which(Puertas != 3 & 1:3 != posicion)
+  animador_abre <- sample(puertas_abiertas, 1)
+  
+  # Si el participante decide cambiar de puerta
+  if (cambiar) {
+    # El participante cambia a la puerta que queda cerrada
+    eleccion_final <- setdiff(1:3, c(posicion, animador_abre))
+  } else {
+    # El participante se queda con su elección inicial
+    eleccion_final <- posicion
+  }
+  
+  return(Puertas[eleccion_final] == 3) # Retornamos la elección, esta puede que tenga el premio o no
 }
 
 # Función que simula N juegos
 n_juegos <- function(n = 10 ,cambiar_puerta = TRUE){
+  results <- logical(n)
   
+  for (i in 1:n) {
+    results[i] <- montyhall(cambiar_puerta)
+  }
+  
+  # Calcular la probabilidad de ganar
+  prob_success <- cumsum(results) / (1:n)
+  
+  # Graficar la convergencia de la probabilidad de ganar
+  plot(1:n, prob_success, type = "l", 
+       xlab = "Número de juegos", ylab = "Probabilidad de ganar",
+       main = paste("Convergencia de la probabilidad de ganar (cambiar =", cambiar_puerta, ")"))
+  
+  return(prob_success[n])
 }
+
+n_juegos(10, cambiar_puerta = TRUE)
+
+n_juegos(10, cambiar_puerta = FALSE)
 ```
 
 ---
