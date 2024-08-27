@@ -152,6 +152,7 @@ correlation_matrix <- cor(hearth_database[numeric_attrs], use="complete.obs", me
 # Visualization of the correlation matrix
 corrplot(correlation_matrix, method="square")
 ```
+
 Y creamos un boxplot para cada atributo numérico:
 
 ```{r eval=TRUE}
@@ -208,6 +209,8 @@ Realice el experimento de lanzar una moneda cargada 1000 veces y observe el comp
 
 **Respuesta**
 
+Podemos notar que la probabilidad de que salga cara converge cercano a 0.6, lo cual es a su vez cercano a 5/8. Esto se gráfica con el siguiente código:
+
 ```{r eval=TRUE}
 # Definir la probabilidad de salir cara
 prob_cara <- 5/8
@@ -234,7 +237,6 @@ plot(1:1000, prob_estimada, type = "l",
      xlab = "Número de lanzamientos", ylab = "Probabilidad de cara",
      main = "Convergencia de la probabilidad de cara")
 ```
-Podemos notar que la probabilidad de que salga cara converge cercano a 0.6, lo cual es a su vez cercano a 5/8.
 
 #### El problema de Monty Hall 
 
@@ -251,7 +253,9 @@ Imagine que usted es participante del concurso y desea calcular la probabilidad 
 
 **Respuesta:**
 
-```{r eval=FALSE}
+Podemos gráficar la convergencia al igual que en el experimento de la moneda al realizar 1000 iteraciones del experimento, vemos que converge a un valor mayor. Además nos imprime un valor mayor para el caso en el que cambia de puerta y un valor menor para el caso en que no. Esto se ve con el siguiente código:
+
+```{r eval=TRUE}
 # To avoid warning messages
 options(warn = -1)
 
@@ -294,9 +298,9 @@ n_juegos <- function(n = 10 ,cambiar_puerta = TRUE){
   return(prob_success[n])
 }
 
-n_juegos(10, cambiar_puerta = TRUE)
+n_juegos(1000, cambiar_puerta = TRUE)
 
-n_juegos(10, cambiar_puerta = FALSE)
+n_juegos(1000, cambiar_puerta = FALSE)
 ```
 
 ---
@@ -347,11 +351,31 @@ Para la segunda parte de este experimento, con las funciones ya creadas, proyect
 
 **Respuesta**
 
-```{r eval=FALSE}
+El siguiente código gráfica la evolución de los fondos para cada apuesta:
+
+```{r eval=TRUE}
 # Función para obtener el desarrollo de las apuestas
 ruina <- function(fondos = 100, apuesta = 5){
+  # Current funds
+  vec_fondos <- c()
+  
   while (0<fondos & fondos<200) {
-    
+    # Simulation of event with 8/19 probability
+    if (runif(1) <= 8/19) {
+      # Add apuesta to fondos
+      fondos <- fondos + apuesta
+    } else {
+      # Subtract apuesta from fondos
+      fondos <- fondos - apuesta
+    }
+    # Add fondos to vec_fondos
+    vec_fondos <- c(vec_fondos, fondos)
+  }
+  
+  if (fondos >= 200) {
+    cat("Ganó")
+  } else {
+    cat("Perdió")
   }
   return(vec_fondos) # Devuelve un vector con el desarrollo de los fondos
 }
@@ -361,7 +385,44 @@ plot(ruina(apuesta = 25), type="l", col="blue", xlab="N° de juegos", ylab="Fond
 plot(ruina(apuesta = 50), type="l", col="blue", xlab="N° de juegos", ylab="Fondos", main="Evolución de los fondos (apuesta = 50)")
 ```
 
+Para la segunda parte realizamos el experimento proyectando 5000 apuestas. Notamos que la probabilidad de éxito va aumentando a medida que aumenta la apuesta, con lo cual, contradecimos la hipótesis de nuestro amigo. Aquí quiero recalcar que no use funciones ruina y perdida como tal sino que cree una función que directamente simula todo el experimento con variables. Esto se puede ver con el siguiente código:
 
+```{r, eval=TRUE}
+# Function to project 5000 bets
+bets_simulation <- function(initial_funds = 100, bet = 5, n_simulations = 5000) {
+  succeses <- 0
+  
+  for (i in 1:n_simulations) {
+    funds <- initial_funds
+    
+    while (0<funds & funds<200) {
+      if (runif(1) <= 8/19) {
+        funds <- funds + bet
+      } else {
+        funds <- funds - bet
+      }
+    }
+    
+    if (funds >= 200) {
+      succeses <- succeses + 1
+    }
+  }
+  
+  success_probability <- succeses / n_simulations
+  return(success_probability)
+}
+
+# Probar la función con apuestas de 5, 25 y 50
+prob_5 <- bets_simulation(bet = 5)
+prob_25 <- bets_simulation(bet = 25)
+prob_50 <- bets_simulation(bet = 50)
+
+# Mostrar los resultados
+cat("Probabilidad de éxito con apuesta de 5: ", prob_5, "\n")
+cat("Probabilidad de éxito con apuesta de 25: ", prob_25, "\n")
+cat("Probabilidad de éxito con apuesta de 50: ", prob_50, "\n")
+
+```
 
 &nbsp;
 <hr />
