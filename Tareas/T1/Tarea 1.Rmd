@@ -1,0 +1,651 @@
+---
+title: "Tarea 1"
+output:
+  html_document:
+    df_print: paged
+---
+
+![](banner.png)
+
+<center>
+
+<h1>Tarea 1: Foundations</h1>
+
+</center>
+
+<center><strong>CC6104: Statistical Thinking</strong></center>
+
+#### **Integrantes :**
+
+-   Franco Cattani
+-   Juan Molina
+
+#### **Cuerpo Docente:**
+
+-   Profesor: Felipe Bravo M.
+-   Auxiliares: Benjamín Farías, Martín Paredes
+-   Ayudantes: Scarleth Betancurt, Emilio Díaz, Kevin Iturra, Renzo Zanca
+
+### **Índice:**
+
+1.  [Objetivo](#id1)
+2.  [Instrucciones](#id2)
+3.  [Referencias](#id3)
+4.  [Elaboración de Código](#id4)
+
+### **Objetivo**<a name="id1"></a>
+
+[Bienvenid\@s](mailto:Bienvenid@s){.email} a la primera tarea del curso Statistical Thinking. Esta tarea tiene como objetivo evaluar los contenidos teóricos de la primera parte del curso, los cuales se enfocan principalmente en análisis exploratorio de datos y conceptos introductorios de probabilidades. Si aún no han visto las clases, se recomienda visitar los enlaces de las referencias.
+
+La tarea consta de ejercicios prácticos con el fín de introducirlos a la programación en R enfocada en el análisis estadístico de datos.
+
+### **Instrucciones:**<a name="id2"></a>
+
+-   La tarea se realiza en grupos de **máximo 2 personas**. Pero no existe problema si usted desea hacerla de forma individual.
+-   La entrega es a través de u-cursos a más tardar el día estipulado en la misma plataforma. A las tareas atrasadas se les descontará un punto por día.
+-   El formato de entrega es este mismo **Rmarkdown** y un **html** con la tarea desarrollada. Por favor compruebe que todas las celdas han sido ejecutadas en el archivo html.
+-   Al momento de la revisión tu código será ejecutado. Por favor verifica que tu entrega no tenga errores de compilación.
+-   No serán revisadas tareas desarrolladas en Python.
+-   Está **PROHIBIDO** la copia o compartir las respuestas entre integrantes de diferentes grupos.
+-   Pueden realizar consultas de la tarea a través de U-cursos y/o del canal de Discord del curso.
+
+### **Referencias:**<a name="id3"></a>
+
+Slides de las clases:
+
+-   [Introduction to Statistical Thinking](https://github.com/dccuchile/CC6104/blob/master/slides/1_1_ST-intro.pdf)
+-   [Introduction to R](https://github.com/dccuchile/CC6104/blob/master/slides/1_2_ST-R.pdf)
+-   [Descriptive Statistics](https://github.com/dccuchile/CC6104/blob/master/slides/1_3_ST-explore.pdf)
+-   [Probability](https://github.com/dccuchile/CC6104/blob/master/slides/1_4_ST-prob.pdf)
+
+Videos de las clases:
+
+-   Introduction to Statistical Thinking: [video1](https://youtu.be/X4SqJu6lExM) [video2](https://youtu.be/YbiQU5TTBX4)
+-   Introduction to R: [video1](https://youtu.be/MbeLD3hWWVo) [video2](https://youtu.be/9W_eWCy86F4) [video3](https://youtu.be/QvFXSw2-1r4) [video4](https://youtu.be/y4JY7klrbfQ)
+-   Descriptive Statistics: [video1](https://youtu.be/kWNskZ8_98o) [video2](https://youtu.be/_FJ8x9M4b1w) [video3](https://youtu.be/m7VBNZ2mYWI) [video4](https://youtu.be/ylGMJ_aSQk0)
+-   Probability: [video1](https://youtu.be/R9AVYV73m1M) [video2](https://youtu.be/zubh1jbRiKE) [video3](https://youtu.be/uiwToagp0z4) [video4](https://youtu.be/RlhN3t_VIyw) [video5](https://youtu.be/4kV1dBaeWVc) [video6](https://youtu.be/MGyXc70JdSk)
+
+### **Elaboración de código**<a name="id4"></a>
+
+En la siguiente sección deberá resolver cada uno de los experimentos computacionales a través de la programación en R. Para esto se le aconseja que cree funciones en R, ya que le facilitará la ejecución de gran parte de lo solicitado.
+
+## Pregunta 1: Visualización de Datos
+
+Para esta pregunta usted deberá trabajar en base al conjunto de datos `hearth_database.csv`, el cual esta compuesto por las siguientes variables:
+
+-   target: Señala si el paciente tuvo un infarto.
+-   sex: Sexo de los sujetos de prueba.
+-   fbs: Azúcar en la sangre con ayunas. Esta variable señala solo si se encuentra \<=120 o \>120.
+-   exang: Angina de pecho inducida por el ejercicio.
+-   cp: Tipo de dolor de pecho.
+-   restecg: Resultados electrocardiográficos en reposo.
+-   slope: Pendiente del segmento ST máximo de ejercicio.
+-   ca: Número de buques principales.
+-   thal: Thalassemia.
+-   age: Edad en años.
+-   trestbps: Presión arterial en reposo.
+-   chol: colesterol sérico en mg/dl.
+-   thalach: Frecuencia cardíaca máxima alcanzada.
+-   oldpeak: Depresión del ST inducida por el ejercicio en relación con el reposo.
+
+En base al dataset propuesto realice un análisis exploratorio de los datos (EDA). Para su análisis enfoquen el desarrollo en las siguientes tareas:
+
+-   [ ] Obtenga la media, mediana, quintiles y valores máximos desde los datos que componen el dataset.
+-   [ ] Obtenga la Matriz de correlación de Pearson y visualice la relación entre las variables numéricas.
+-   [ ] Visualice los boxplot para las variables numéricas.
+-   [ ] Visualice a través de un histograma como distribuyen las variables respecto a los TARGET.
+
+**Respuesta** Se crean los vectores "means", "medians" y "maxes" que contienen las medias, medianas y máximos respectivamente de las columnas numéricas. Esto se compara con lo dado por la función "summary" y vemos que se condice. Luego, se calculan los quintiles y se guardan en el dataset "quintils". El código utilizado es el siguiente:
+
+```{r eval=FALSE}
+# Librerías
+install.packages("corrplot")
+install.packages("ggplot2")
+```
+
+```{r eval=TRUE}
+library(corrplot)
+library(ggplot2)
+
+# Evitar warnings
+options(warn = -1)
+
+# Importar y leer csv
+hearth_database <- read.table(file="hearth_database.csv",header=T,sep=",")
+
+# Selección de atributos
+numeric_attrs <- c("slope", "ca", "thal", "age", "trestbps", "chol", "thalach", "oldpeak")
+
+# Se computa la media, mediana, máximo y quintiles
+
+# Media
+means_all <- sapply(hearth_database, mean)
+means <- means_all[numeric_attrs]
+rm(means_all)
+
+# Mediana
+medians_all <- sapply(hearth_database, median)
+medians <- sapply(medians_all[numeric_attrs], as.numeric)
+rm(medians_all)
+
+# Máximo
+maxes_all <- sapply(hearth_database, max)
+maxes <- sapply(maxes_all[numeric_attrs], as.numeric)
+rm(maxes_all)
+
+# Quintiles
+quintils <- lapply(hearth_database[numeric_attrs], function(col) {
+  quantile(col, probs=seq(0, 1, by = 0.2), na.rm=TRUE)
+})
+
+# Se muestran los valores
+print(means)
+print(medians)
+print(maxes)
+print(quintils)
+
+# Se compara con el dataset
+summary(hearth_database)
+```
+
+Luego mostramos la matriz de correlación de Pearson para los atributos numéricos:
+
+```{r eval=TRUE}
+# Se calcula la matriz de correlación de Pearson
+correlation_matrix <- cor(hearth_database[numeric_attrs], use="complete.obs", method="pearson")
+
+# Se muestra la matriz
+corrplot(correlation_matrix, method="square")
+```
+
+Y creamos un boxplot para cada atributo numérico:
+
+```{r eval=TRUE}
+
+# Se muestra un boxplot para cada atributo
+for (col in names(hearth_database[numeric_attrs])) {
+  boxplot(hearth_database[col],main=paste("Boxplot of", col),xlab=col,ylab="Values")
+  rm(col)
+}
+```
+
+Finalmente mostramos mediante un histograma como distribuyen las variables respecto al TARGET:
+
+```{r eval=TRUE}
+
+# Se separa en dos conjuntos el dataset
+yes_target <- subset(hearth_database, target=="YES")
+no_target <- subset(hearth_database, target=="NO")
+
+# Se muestran los gráficos de cada atributo
+for (col in names(hearth_database[numeric_attrs])) {
+  plot(density(as.numeric(yes_target[[col]])), main=paste("Density of", col, "for targets with hearth problems"))
+  plot(density(as.numeric(no_target[[col]])), main=paste("Density of", col, "for targets without hearth problems"))
+  rm(col)
+}
+
+rm(yes_target)
+rm(no_target)
+```
+
+```{r eval=FALSE}
+```
+
+------------------------------------------------------------------------
+
+## Pregunta 2: Teorema Central del Limite
+
+Pruebe el teorema central del limite aplicando un muestreo de la media en las distribuciones Gamma, Normal y una a su elección. Grafique los resultados obtenidos y señale aproximadamente el numero de muestreos necesarios para obtener el resultado esperado, pruebe esto con las siguientes cantidades de muestreo $\{10,100,1000,5000\}$. ¿El efecto ocurre con el mismo número de muestreo para todas las distribuciones?.
+
+**Respuesta**
+
+```{r eval=TRUE}
+# Para graficar
+library(ggplot2)
+
+# Definición de variables o estructuras necesarias para el muestreo.
+samples_sizes <- c(10, 100, 1000, 5000)
+n <- 1000
+
+# Listas para guardar las medias
+medias_gamma <- list()
+medias_normal <- list()
+medias_poisson <- list()
+
+# Realizar el muestreo de las distribuciones.
+for (size in samples_sizes) {
+  
+  # Variables temporales para guardar las medias muestrales
+  temp_gamma <- numeric(n)
+  temp_normal <- numeric(n)
+  temp_poisson <- numeric(n)
+  
+  for(i in 1:n) {
+    
+    # Cálculo de la media muestral para los samples de cada distribución
+    temp_gamma[i] <- mean(rgamma(size, shape=1))
+    temp_normal[i] <- mean(rnorm(size, mean=0, sd=1))
+    temp_poisson[i] <- mean(rpois(size, lambda = 1))
+  }
+  
+  # Almacenar los resultados en las listas identificando el tamaño del sample
+  medias_gamma[[as.character(size)]] <- temp_gamma
+  medias_normal[[as.character(size)]] <- temp_normal
+  medias_poisson[[as.character(size)]] <- temp_poisson
+}
+
+
+# Código para gráficos
+for (size in samples_sizes) {
+
+  # Extraer las medias muestrales de las listas
+  temp_gamma <- medias_gamma[[as.character(size)]]
+  temp_normal <- medias_normal[[as.character(size)]]
+  temp_poisson <- medias_poisson[[as.character(size)]]
+
+  # Calcular media y desviación estándar empíricas de las medias muestrales
+  mean_gamma_emp <- mean(temp_gamma)
+  sd_gamma_emp <- sd(temp_gamma)
+  mean_normal_emp <- mean(temp_normal)
+  sd_normal_emp <- sd(temp_normal)
+  mean_poisson_emp <- mean(temp_poisson)
+  sd_poisson_emp <- sd(temp_poisson)
+
+  # Calcular la media teórica y desviación estándar teórica esperada según el TCL
+  mean_gamma_teo <- 1  # Media teórica de la Gamma con shape = 1
+  sd_gamma_teo <- 1 / sqrt(size)
+  
+  mean_normal_teo <- 0  # Media teórica de la Normal con mean = 0
+  sd_normal_teo <- 1 / sqrt(size)
+  
+  mean_poisson_teo <- 1  # Media teórica de la Poisson con lambda = 1
+  sd_poisson_teo <- 1 / sqrt(size)
+
+  # Histograma para la distribución Gamma
+  # Densidad para la distribución Gamma
+plot(density(temp_gamma), col = "red", lwd = 2, 
+     main = paste("Gamma - Tamaño Muestra", size),
+     xlab = "Medias Muestrales", ylab = "Densidad")
+curve(dnorm(x, mean = mean_gamma_emp, sd = sd_gamma_emp), col = "black", lwd = 2, add = TRUE)
+mtext(paste("Media teórica =", round(mean_gamma_teo, 2), 
+            "Desviación estándar teórica =", round(sd_gamma_teo, 2)), 
+      side = 3, line = 0.7, cex = 0.8)
+mtext(paste("Media empírica =", round(mean_gamma_emp, 2), 
+            "Desviación estándar empírica =", round(sd_gamma_emp, 2)), 
+      side = 3, line = 0, cex = 0.8)
+
+# Densidad para la distribución Normal
+plot(density(temp_normal), col = "green", lwd = 2, 
+     main = paste("Normal - Tamaño Muestra", size),
+     xlab = "Medias Muestrales", ylab = "Densidad")
+curve(dnorm(x, mean = mean_normal_emp, sd = sd_normal_emp), col = "black", lwd = 2, add = TRUE)
+mtext(paste("Media teórica =", round(mean_normal_teo, 2), 
+            "Desviación estándar teórica =", round(sd_normal_teo, 2)), 
+      side = 3, line = 0.7, cex = 0.8)
+mtext(paste("Media empírica =", round(mean_normal_emp, 2), 
+            "Desviación estándar empírica =", round(sd_normal_emp, 2)), 
+      side = 3, line = 0, cex = 0.8)
+
+# Densidad para la distribución Poisson
+plot(density(temp_poisson), col = "blue", lwd = 2, 
+     main = paste("Poisson - Tamaño Muestra", size),
+     xlab = "Medias Muestrales", ylab = "Densidad")
+curve(dnorm(x, mean = mean_poisson_emp, sd = sd_poisson_emp), col = "black", lwd = 2, add = TRUE)
+mtext(paste("Media teórica =", round(mean_poisson_teo, 2), 
+            "Desviación estándar teórica =", round(sd_poisson_teo, 2)), 
+      side = 3, line = 0.7, cex = 0.8)
+mtext(paste("Media empírica =", round(mean_poisson_emp, 2), 
+            "Desviación estándar empírica =", round(sd_poisson_emp, 2)), 
+      side = 3, line = 0, cex = 0.8)
+
+}
+```
+
+Al graficar los valores de las medias muestrales utilizando histogramas, se observa que estas tienden a distribuirse de forma normal, lo cual es coherente con lo que predice el Teorema Central del Límite (TCL). Es importante destacar que, a medida que aumenta el tamaño de las muestras, la distribución de las medias se asemeja más claramente a una distribución normal, lo que reafirma nuevamente los dicho en el TCL. Para ilustrar este fenómeno, se ha superpuesto una curva de distribución normal sobre cada histograma, utilizando los parámetros (media y desviación estándar) calculados a partir de las medias muestrales. Se puede ver claramente como las distribuciones no normales, las Gamma y de Poisson, convergen a una normal de parámetros 1 y 0, y los parámetros de tal normal son coherentes con el valor empírico, por lo que se puede dar por probado el TCL.
+
+------------------------------------------------------------------------
+
+## Pregunta 3: Ley de los Grandes Numeros.
+
+#### Lanzamiento de monedas
+
+Realice el experimento de lanzar una moneda cargada 1000 veces y observe el comportamiento que tiene la probabilidad de salir cara. Para realizar el experimento considere que la moneda tiene una probabilidad de $5/8$ de salir cara. Grafique el experimento para las secuencias de intentos que van desde 1 a 1000, señalando el valor en que converge la probabilidad de salir cara.
+
+**Respuesta**
+
+Podemos notar que la probabilidad de que salga cara converge cercano a 0.6, lo cual es a su vez cercano a 5/8. Esto se gráfica con el siguiente código:
+
+```{r eval=TRUE}
+# Definir la probabilidad de salir cara
+prob_cara <- 5/8
+
+# Vector para almacenar la probabilidad estimada de salir cara en cada paso
+prob_estimada <- numeric(1000)
+
+# Simular lanzamientos
+num_caras <- 0
+
+# Simular lanzamientos
+for (lanzamientos in 1:1000) {
+  # Simular el lanzamiento de la moneda
+  if (runif(1) < prob_cara) {
+    num_caras <- num_caras + 1
+  }
+  
+  # Calcular la probabilidad estimada hasta el lanzamiento actual
+  prob_estimada[lanzamientos] <- num_caras / lanzamientos
+}
+
+# Gráfico de la convergencia
+plot(1:1000, prob_estimada, type = "l", 
+     xlab = "Número de lanzamientos", ylab = "Probabilidad de cara",
+     main = "Convergencia de la probabilidad de cara")
+```
+
+#### El problema de Monty Hall
+
+Remontándonos en la televisión del año 1963, en USA existía un programa de concursos donde los participantes debían escoger entre 3 puertas para ganar un premio soñado. El problema del concurso era que solo detrás de 1 puerta estaba el premio mayor, mientras que detrás de las otras dos habían cabras como "premio".
+
+Una de las particularidades de este concurso, es que cuando el participante escogía una puerta, el animador del show abría una de las puertas que no fue escogida por el participante (Obviamente la puerta abierta por el animador no contenía el premio). Tras abrir la puerta, el animador consultaba al participante si su elección era definitiva, o si deseaba cambiar la puerta escogida por la otra puerta cerrada. Un vídeo que puede ayudar a comprender mejor este problema en el siguiente [link](https://www.youtube.com/watch?v=rSa_uiKncEI).
+
+Imagine que usted es participante del concurso y desea calcular la probabilidad de ganar el gran premio **si cambia de puerta** en el momento que el animador se lo ofrece. Utilizando listas/arrays/vectores simule las puertas del concurso, dejando aleatoriamente el premio en alguna posición del array. Hecho esto, genere un numero de forma aleatoria para escoger una de las puerta (posiciones de la estructura), para luego ver si cambiando de posición tendrá mayores posibilidades de ganar el premio. Genere N veces el experimento y grafique cada una de las iteraciones, tal como se hizo en el ejercicio de las monedas.
+
+<p align="center">
+
+<img src="https://brilliant-staff-media.s3-us-west-2.amazonaws.com/tiffany-wang/gWotbuEdYC.png" width="350"/>
+
+</p>
+
+**Respuesta:**
+
+Podemos gráficar la convergencia al igual que en el experimento de la moneda al realizar 1000 iteraciones del experimento, vemos que converge a un valor mayor. Además nos imprime un valor mayor para el caso en el que cambia de puerta y un valor menor para el caso en que no. Esto se ve con el siguiente código:
+
+```{r eval=TRUE}
+# Evitar warnings
+options(warn = -1)
+
+# Creamos una función que simule el juego
+montyhall <- function(cambiar = TRUE){
+  Puertas <- sample(1:3,3)             #Puertas donde la posición que tiene el 3 es el premio
+  posicion <- sample(1:3,1)            #Elección del participante.
+  
+  puertas_abiertas <- which(Puertas != 3 & 1:3 != posicion)
+  animador_abre <- sample(puertas_abiertas, 1)
+  
+  # Si el participante decide cambiar de puerta
+  if (cambiar) {
+    # El participante cambia a la puerta que queda cerrada
+    eleccion_final <- setdiff(1:3, c(posicion, animador_abre))
+  } else {
+    # El participante se queda con su elección inicial
+    eleccion_final <- posicion
+  }
+  
+  return(Puertas[eleccion_final] == 3) # Retornamos la elección, esta puede que tenga el premio o no
+}
+
+# Función que simula N juegos
+n_juegos <- function(n = 10 ,cambiar_puerta = TRUE){
+  results <- logical(n)
+  
+  for (i in 1:n) {
+    results[i] <- montyhall(cambiar_puerta)
+  }
+  
+  # Calcular la probabilidad de ganar
+  prob_success <- cumsum(results) / (1:n)
+  
+  # Graficar la convergencia de la probabilidad de ganar
+  plot(1:n, prob_success, type = "l", 
+       xlab = "Número de juegos", ylab = "Probabilidad de ganar",
+       main = paste("Convergencia de la probabilidad de ganar (cambiar =", cambiar_puerta, ")"))
+  
+  return(prob_success[n])
+}
+
+n_juegos(1000, cambiar_puerta = TRUE)
+
+n_juegos(1000, cambiar_puerta = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Pregunta 4: ¿Independencia?
+
+Ustedes disponen de los dados D1 y D2, los cuales no están cargados y son utilizados para comprobar que $\mathbb{P}(AB)=\mathbb{P}(A)\mathbb{P}(B)$ cuando el evento A es independiente del B. Para estudiar la independencia considere que los eventos A y B se definen de la siguiente manera; sea A el evento dado por los valores obtenidos en el lanzamiento del dado D1, este está compuesto por $A=\{D1=1,D1=2,D1=6\}$. Por otro lado, el evento B viene dado por los valores obtenidos con el dado D2, el que está conformado por $B=\{D2=1,D2=2,D2=3,D2=4\}$. Con esto, tendremos un $\mathbb{P}(A)=1/2$, $\mathbb{P}(𝐵)=2/3$ y $\mathbb{P}(AB)=1/3$. Compruebe de forma gráfica que al realizar 1000 lanzamientos (u otro valor grande que usted desea probar) se visualiza que $\mathbb{P}(AB)=\mathbb{P}(A)\mathbb{P}(B)$.
+
+Hecho lo anterior, compruebe el comportamiento de un segundo grupo de eventos, dados por el lanzamiento de solo el dado D1. Donde, los eventos para D1 quedan definidos como: $A =\{D1=1,D1=2,D1=6\}$ y $B=\{D1=1,D1=2,D1=3\}$. ¿Se observa independencia en este experimento?.
+
+Se le aconseja que para simular los lanzamientos de dados utilice la función `sample()` para generar valores aleatorios entre 1 y 6. Compruebe los números generados por la función con los casos favorables de cada uno de los eventos a ser estudiados.
+
+**Respuesta:**
+
+```{r eval=TRUE}
+# Primer experimento
+
+N_lan <- 1000  # Número de lanzamientos
+steps <- seq(10, N_lan, by = 10)  # Pasos en los que se registrarán los valores
+
+# Vectores para almacenar las probabilidades empíricas en cada paso
+P_A_emp_values <- numeric(length(steps))
+P_B_emp_values <- numeric(length(steps))
+P_AB_emp_values <- numeric(length(steps))
+P_AxB_emp_values <- numeric(length(steps))
+
+# Definir los lanzamientos favorables
+L_A <- c(1, 2, 6)  # Valores favorables para A
+L_B <- c(1, 2, 3, 4)  # Valores favorables para B
+
+# Simulación de lanzamientos de los dos dados
+D1 <- sample(1:6, N_lan, replace = TRUE)  # Lanzamientos del dado D1
+D2 <- sample(1:6, N_lan, replace = TRUE)  # Lanzamientos del dado D2
+
+# Realizar los cálculos a medida que se incrementa el número de experimentos
+for (i in seq_along(steps)) {
+  current_step <- steps[i]
+  
+  # Calcular los eventos A, B, y AB hasta el experimento actual
+  A <- D1[1:current_step] %in% L_A
+  B <- D2[1:current_step] %in% L_B
+  AB <- A & B
+  
+  # Calcular las probabilidades empíricas
+  P_A_emp_values[i] <- mean(A)
+  P_B_emp_values[i] <- mean(B)
+  P_AB_emp_values[i] <- mean(AB)
+  
+  # Calcular la multiplicación de probabilidades empíricas
+  P_AxB_emp_values[i] <- P_A_emp_values[i] * P_B_emp_values[i]
+}
+
+# Graficar la evolución de las probabilidades empíricas
+plot(steps, P_AB_emp_values, type = "l", col = "blue", lwd = 2,
+     ylim = c(0, max(P_AB_emp_values, P_AxB_emp_values)),
+     xlab = "Número de Experimentos", ylab = "Probabilidad",
+     main = "Evolución de P(A)P(B) y P(AB) con el Número de Experimentos")
+lines(steps, P_AxB_emp_values, col = "red", lwd = 2)
+legend("bottomright", legend = c("P(AB) empírica", "P(A) x P(B) empírica"), 
+       col = c("blue", "red"), lwd = 2)
+
+# Mostrar los resultados comparando empíricas con teóricas
+cat("P(A) teórica =", 1/2, ", P(A) empírica =", P_A_emp_values[length(steps)], "\n")
+cat("P(B) teórica =", 2/3, ", P(B) empírica =", P_B_emp_values[length(steps)], "\n")
+cat("P(AB) teórica =", 1/3, ", P(AB) empírica =", P_AB_emp_values[length(steps)], "\n")
+cat("P(A) x P(B) teórica =", 1/3, ", P(A) x P(B) empírica =", P_AxB_emp_values[length(steps)], "\n")
+
+```
+
+Como se puede ver, los valores de $\mathbb{P}(AB)$ y $\mathbb{P}(A)\mathbb{P}(B)$ se van aproximando cada vez más a medida que aumenta el número de experimentos, es más, viendo los valores, se puede ver que los valores promedios del experimento con muy próximos a lo esperado asumiendo estos eventos como independientes.
+
+```{r eval=TRUE}
+# Segundo experimento
+
+N_lan <- 1000  # Número total de lanzamientos
+steps <- seq(10, N_lan, by = 10)  # Pasos en los que se registrarán los valores
+
+# Vectores para almacenar las probabilidades empíricas en cada paso
+P_A_emp_values2 <- numeric(length(steps))
+P_B_emp_values2 <- numeric(length(steps))
+P_AB_emp_values2 <- numeric(length(steps))
+P_AxB_emp_values2 <- numeric(length(steps))
+
+# Definir lanzamientos favorables para A y B
+L_A2 <- c(1, 2, 6)  # Valores favorables para A2
+L_B2 <- c(1, 2, 3)  # Valores favorables para B2
+
+# Simulación de lanzamientos del dado D1
+D1 <- sample(1:6, N_lan, replace = TRUE)  # Lanzamientos del dado D1
+
+# Realizar los cálculos a medida que se incrementa el número de experimentos
+for (i in seq_along(steps)) {
+  current_step <- steps[i]
+  
+  # Calcular los eventos A2, B2, y AB2 hasta el experimento actual
+  A2 <- D1[1:current_step] %in% L_A2
+  B2 <- D1[1:current_step] %in% L_B2
+  AB2 <- A2 & B2
+  
+  # Calcular las probabilidades empíricas
+  P_A_emp_values2[i] <- mean(A2)
+  P_B_emp_values2[i] <- mean(B2)
+  P_AB_emp_values2[i] <- mean(AB2)
+  
+  # Calcular la multiplicación de probabilidades empíricas
+  P_AxB_emp_values2[i] <- P_A_emp_values2[i] * P_B_emp_values2[i]
+}
+
+# Graficar la evolución de las probabilidades empíricas
+plot(steps, P_AB_emp_values2, type = "l", col = "blue", lwd = 2,
+     ylim = c(0, max(P_AB_emp_values2, P_AxB_emp_values2)),
+     xlab = "Número de Experimentos", ylab = "Probabilidad",
+     main = "Evolución de P(A)P(B) y P(AB) con el Número de Experimentos (Segundo Experimento)")
+lines(steps, P_AxB_emp_values2, col = "red", lwd = 2)  # Línea roja continua
+legend("bottomright", legend = c("P(AB) empírica", "P(A) x P(B) empírica"), 
+       col = c("blue", "red"), lwd = 2)
+
+  cat("Resultados en el último experimento:\n")
+  cat("P(A) teórica =", 1/2 , ", P(A) empírica =", P_A_emp_values2[length(steps)], "\n")
+  cat("P(B) teórica =", 1/2, ", P(B) empírica =", P_B_emp_values2[length(steps)], "\n")
+  cat("P(AB) teórica (asumiendo independencia) =", 1/4, ", P(AB) empírica =", P_AB_emp_values2[length(steps)], "\n")
+  cat("P(A) x P(B) teórica (asumiendo independencia) =", 1/4, ", P(A) x P(B) empírica =", P_AxB_emp_values2[length(steps)], "\n")
+  
+```
+
+Aquí efectivamente se ve que la independencia no es válida, pues los valores de $\mathbb{P}(AB)$ y $\mathbb{P}(A)\mathbb{P}(B)$ se encuentran distanciados en todo momento, lo que es lógico viendo que los dos eventos dependen del mismo lanzamiento, lo que los hace evidentemente dependientes.
+
+------------------------------------------------------------------------
+
+## Pregunta 5: La Ruina del Jugador
+
+Un amigo ludópata suyo le comenta que el truco de jugar en el casino esta en no parar de apostar y apostando lo mínimo posible. Ya que así, tienes mas probabilidades de ganar el gran pozo que acumula el juego. Usted sabiendo la condición de su amigo, decide no creer en su conjetura y decide probar esto a través de un experimento.
+
+Para realizar el experimento usted decide asumir las siguientes declaraciones, bajo sus observaciones:
+
+-   La probabilidad de ganar en un juego del casino es $8/19$
+-   Sabe que su amigo *solo* posee siempre fondos en el rango de 0 a 200 dolares.
+-   Las apuestas como mínimo deben ser igual a 5 dolares.
+-   El monto de las apuestas no cambia y son siempre igual a la primera. Por ejemplo, si su amigo apuesta 50 dolares, todos los próximos juegos apuesta 50 hasta que se acaba su dinero.
+-   Usted pierde cuando se le acaban los fondos.
+
+En el primer experimento deberá obtener la evolución de los fondos hasta que el jugador se queda sin fondos para jugar. Puede ser útil seguir la lógica de una moneda cargada para realizar esto. Pruebe esto con una apuesta igual a 5, 25 y 50 graficando los resultados. Comente los resultados obtenidos.
+
+Para la segunda parte de este experimento, con las funciones ya creadas, proyecte 5000 apuestas y obtenga la probabilidad a la que converge el experimento empezando con una apuesta de: 5, 25 y 50. Para este experimento considerar como éxito (1) cuando su función ruina supera los 200 y considere lo contrario cuando su función perdida es menor o igual a 0.
+
+**Respuesta**
+
+El siguiente código gráfica la evolución de los fondos para cada apuesta:
+
+```{r eval=TRUE}
+# Función para obtener el desarrollo de las apuestas
+ruina <- function(fondos = 100, apuesta = 5){
+  # Current funds
+  vec_fondos <- c()
+  
+  while (0<fondos & fondos<200) {
+    # Simulación del evento con probabilidad 8/19 
+    if (runif(1) <= 8/19) {
+      # Se añade la apuesta a fondos
+      fondos <- fondos + apuesta
+    } else {
+      # Se sustrae la apuesta a fondos
+      fondos <- fondos - apuesta
+    }
+    # Se añade fondos a vec_fondos
+    vec_fondos <- c(vec_fondos, fondos)
+  }
+  
+  if (fondos >= 200) {
+    cat("Ganó ")
+  } else {
+    cat("Perdió ")
+  }
+  return(vec_fondos) # Devuelve un vector con el desarrollo de los fondos
+}
+
+plot(ruina(), type="l", col="blue", xlab="N° de juegos", ylab="Fondos", main="Evolución de los fondos (apuesta = 5)")
+plot(ruina(apuesta = 25), type="l", col="blue", xlab="N° de juegos", ylab="Fondos", main="Evolución de los fondos (apuesta = 25)")
+plot(ruina(apuesta = 50), type="l", col="blue", xlab="N° de juegos", ylab="Fondos", main="Evolución de los fondos (apuesta = 50)")
+```
+
+Para la segunda parte realizamos el experimento proyectando 5000 apuestas. Notamos que la probabilidad de éxito va aumentando a medida que aumenta la apuesta, con lo cual, contradecimos la hipótesis de nuestro amigo. Aquí quiero recalcar que no use funciones ruina y perdida como tal sino que cree una función que directamente simula todo el experimento con variables. Esto se puede ver con el siguiente código:
+
+```{r, eval=TRUE}
+# Función para realizar experimento
+bets_simulation <- function(initial_funds = 100, bet = 5, n_simulations = 5000) {
+  succeses <- 0
+  
+  for (i in 1:n_simulations) {
+    funds <- initial_funds
+    
+    while (0<funds & funds<200) {
+      if (runif(1) <= 8/19) {
+        funds <- funds + bet
+      } else {
+        funds <- funds - bet
+      }
+    }
+    
+    if (funds >= 200) {
+      succeses <- succeses + 1
+    }
+  }
+  
+  success_probability <- succeses / n_simulations
+  return(success_probability)
+}
+
+# Probar la función con apuestas de 5, 25 y 50
+prob_5 <- bets_simulation(bet = 5)
+prob_25 <- bets_simulation(bet = 25)
+prob_50 <- bets_simulation(bet = 50)
+
+# Mostrar los resultados
+cat("Probabilidad de éxito con apuesta de 5: ", prob_5, "\n")
+cat("Probabilidad de éxito con apuesta de 25: ", prob_25, "\n")
+cat("Probabilidad de éxito con apuesta de 50: ", prob_50, "\n")
+
+```
+
+ 
+
+<hr />
+
+<p style="text-align: center;">
+
+A work by <a href="https://github.com/dccuchile/CC6104">CC6104</a>
+
+</p>
+
+<!-- Add icon library -->
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css">
+
+<!-- Add font awesome icons -->
+
+<p style="text-align: center;">
+
+<a href="https://github.com/dccuchile/CC6104"><i class="fab fa-github" style='font-size:30px'></i></a>
+
+</p>
+
+ 
