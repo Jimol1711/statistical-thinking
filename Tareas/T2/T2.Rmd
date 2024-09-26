@@ -179,22 +179,25 @@ cat("Bias for sigma = 2:", bias_2, "\n")
 cat("Bias for sigma = 4:", bias_4, "\n")
 ```
 
-```{r, eval=TRUE}
-# sigma = 0
-cte <- rep(0.5,1000)
-x <- 1:1000
-data <- c()
-
-for (n in x) {
-  #...
-}
-```
-
 ```{r, eval=FALSE}
 # sigma = 1
 cte <- rep(0.5,1000)
 x <- 1:1000
 data <- c()
+for (n in x) {
+  X <- rbinom(n, 1, 0.5)
+  epsilon_sigma <- rnorm(1, 0, 1)  # sigma = 1
+  p_hat <- epsilon_sigma + mean(X)
+  data <- c(data, p_hat)
+}
+df_1 <- data.frame(x = x, p_hat = data)
+bias_1 <- calculate_bias(data)
+
+p2 <- ggplot(df_1, aes(x = x, y = p_hat)) +
+  geom_line(color = "red") +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "black") +
+  labs(title = "Estimator of p (sigma = 1)", x = "n", y = "Estimator of p") +
+  theme_minimal()
 ```
 
 ```{r, eval=FALSE}
@@ -202,6 +205,20 @@ data <- c()
 cte <- rep(0.5,1000)
 x <- 1:1000
 data <- c()
+for (n in x) {
+  X <- rbinom(n, 1, 0.5)
+  epsilon_sigma <- rnorm(1, 0, 2)  # sigma = 2
+  p_hat <- epsilon_sigma + mean(X)
+  data <- c(data, p_hat)
+}
+df_2 <- data.frame(x = x, p_hat = data)
+bias_2 <- calculate_bias(data)
+
+p3 <- ggplot(df_2, aes(x = x, y = p_hat)) +
+  geom_line(color = "green") +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "black") +
+  labs(title = "Estimator of p (sigma = 2)", x = "n", y = "Estimator of p") +
+  theme_minimal()
 ```
 
 ```{r, eval=FALSE}
@@ -209,6 +226,34 @@ data <- c()
 cte <- rep(0.5,1000)
 x <- 1:1000
 data <- c()
+for (n in x) {
+  X <- rbinom(n, 1, 0.5)
+  epsilon_sigma <- rnorm(1, 0, 4)  # sigma = 4
+  p_hat <- epsilon_sigma + mean(X)
+  data <- c(data, p_hat)
+}
+df_4 <- data.frame(x = x, p_hat = data)
+bias_4 <- calculate_bias(data)
+
+p4 <- ggplot(df_4, aes(x = x, y = p_hat)) +
+  geom_line(color = "purple") +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "black") +
+  labs(title = "Estimator of p (sigma = 4)", x = "n", y = "Estimator of p") +
+  theme_minimal()
+```
+
+```{r, eval=FALSE}
+# Print plots
+print(p1)
+print(p2)
+print(p3)
+print(p4)
+
+# Print out the biases for each sigma
+cat("Bias for sigma = 0:", bias_0, "\n")
+cat("Bias for sigma = 1:", bias_1, "\n")
+cat("Bias for sigma = 2:", bias_2, "\n")
+cat("Bias for sigma = 4:", bias_4, "\n")
 ```
 
 > Respuesta
