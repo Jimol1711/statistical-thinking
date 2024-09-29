@@ -100,9 +100,9 @@ x <- 1:1000
 data <- c()
 
 for (n in x) {
-  X <- rbinom(n, 1, 0.5)  # Bernoulli random variables with p = 0.5
-  epsilon_sigma <- rnorm(1, 0, 0)  # sigma = 0, so no noise
-  p_hat <- epsilon_sigma + mean(X)  # Estimator with sigma = 0
+  X <- rbinom(n, 1, 0.5)
+  epsilon_sigma <- rnorm(1, 0, 0)
+  p_hat <- epsilon_sigma + mean(X)
   data <- c(data, p_hat)
 }
 df_0 <- data.frame(x = x, p_hat = data)
@@ -190,11 +190,11 @@ cat("Bias for sigma = 4:", bias_4, "\n")
 
 > Respuesta
 
-- [ ] ¿Qué puede decir del sesgo de los estimadores $\hat{p}_{n,\sigma}$?¿Son los estimadores con menos sesgo más precisos? Justifique.
+- [ ] ¿Qué puede decir del sesgo de los estimadores $\hat{p}_{n,\sigma}$? ¿Son los estimadores con menos sesgo más precisos? Justifique.
 
 > Respuesta
 
-Estos muestran alta variabilidad, tanto para altos como bajos valores de $\sigma$. El único que mantiene cierta regularidad es $\sigma = 0$. Esto se debe a que para $\sigma = 0$ no hay ruido en el estimador, por lo que es esperable
+Estos muestran alta variabilidad, tanto para altos como bajos valores de $\sigma$. El único que mantiene cierta regularidad es $\sigma = 0$. Esto se debe a que para $\sigma = 0$ no hay ruido en el estimador, por lo que es esperable que este se acerque al valor real a medida que aumenta n. Vemos que los otros valores de sigma si se diferencian del valor real, aumentando esta diferencia promedio a medida que aumenta n (para $\sigma = 1$ y $\sigma = 2$ es cercana a $\pm 4$, mientras que para $\sigma = 4$ llega hasta $\pm 15$). En conclusión, los estimadores con menos sesgo si son más precisos.
 
 ### Pregunta 2: Intervalo de Confidencia
 
