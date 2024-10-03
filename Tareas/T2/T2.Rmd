@@ -210,7 +210,7 @@ Una forma de estimar la distribución de la media de una población es a través
 - [ ] Obtener las medias y desviaciones estándar de la población real.
 - [ ] Realizar una `sampling distribution` con un tamaño de muestra igual a $100$. Repita la obtención de la media un número elevado de veces (recomendación $5000$ veces).
 - [ ] Calcular el intervalo de confianza para cada uno de las medias obtenidas en las iteraciones.
-- [ ] De acuerdo a los valores obtenidos (medias e intervalos de confianza), grafique cada una de las medias obtenidas en conjunto a sus intervalos de confianza. Aquí debe notar que, si el intervalo de confianza contiene a la media de la población, este se considerará como parte del intervalo de confianza del $95\%$, haga un conteo de cuantos valores están contenidos en este intervalo. Para graficar los intervalos deconfianza puede ser útil utilizar forest plot.
+- [ ] De acuerdo a los valores obtenidos (medias e intervalos de confianza), grafique una muestra aleatoria de las medias obtenidas en conjunto a sus intervalos de confianza. Aquí debe notar que, si el intervalo de confianza contiene a la media de la población, este se considerará como parte del intervalo de confianza del $95\%$, haga un conteo de cuantos valores están contenidos en este intervalo. Para graficar los intervalos deconfianza puede ser útil utilizar forest plot.
 - [ ] Compare las estimaciones para ``bmi`` y ``blood_glucose_level`` y señale que diferencias y similitudes encuentra entre estas (en cuanto a la calidad de la estimación, no los valores obtenidos). De una explicación de por qué cree que se dan las similitudes/diferencias.
 
 **Hints**: 
@@ -225,7 +225,7 @@ Una forma de estimar la distribución de la media de una población es a través
 
 # Definimos tamaños de muestreo
 tamano_muestra = 100
-n_muestras = 10000
+n_muestras = 5000
 
 # Inicializamos estructuras necesarias
 list_mean_bmi = vector()
@@ -241,14 +241,61 @@ list_prop_bgl = vector()
 sucess_bgl = 0
 
 # Obtenemos la media y desviación estándar de cada columna
+real_mean_bmi <- mean(datos$bmi)
+real_sd_bmi <- sd(datos$bmi)
 
+real_mean_bgl <- mean(datos$blood_glucose_level)
+real_sd_bgl <- sd(datos$blood_glucose_level)
 
 # Sampling distribution, calculo del intervalo de confianza y proporción.
 for (i in 1:n_muestras) {
   
+  # Generating samples
+  sample_bmi <- sample(datos$bmi, tamano_muestra)
+  sample_bgl <- sample(datos$blood_glucose_level, tamano_muestra)
+  
+  # Sampling distribution of the mean
+  list_mean_bmi <- c(list_mean_bmi, mean(sample_bmi))
+  list_mean_bgl <- c(list_mean_bgl, mean(sample_bgl))
+  
+  # Standard deviations of the samples
+  sd_bmi <- sd(sample_bmi)
+  sd_bgl <- sd(sample_bgl)
+  
+  # Calculating confidence intervals for bmi
+  margin_error_bmi <- 1.96 * (sd_bmi / sqrt(tamano_muestra))
+  ci_lower_bmi <- mean(sample_bmi) - margin_error_bmi
+  ci_upper_bmi <- mean(sample_bmi) + margin_error_bmi
+  list_interval_bmi <- rbind(list_interval_bmi, c(ci_lower_bmi, ci_upper_bmi))
+  
+  # Calculating confidence intervals for blood_glucose_level
+  margin_error_bgl <- 1.96 * (sd_bgl / sqrt(tamano_muestra))
+  ci_lower_bgl <- mean(sample_bgl) - margin_error_bgl
+  ci_upper_bgl <- mean(sample_bgl) + margin_error_bgl
+  list_interval_bgl <- rbind(list_interval_bgl, c(ci_lower_bgl, ci_upper_bgl))
+  
+  # Verifying if the real mean is within the confidence interval for bmi
+  if (ci_lower_bmi <= real_mean_bmi && ci_upper_bmi >= real_mean_bmi) {
+    sucess_bmi <- sucess_bmi + 1
+  }
+  
+  # Verifying if the real mean is within the confidence interval for blood_glucose_level
+  if (ci_lower_bgl <= real_mean_bgl && ci_upper_bgl >= real_mean_bgl) {
+    sucess_bgl <- sucess_bgl + 1
+  }
 }
 
-# Generamos dataframes para plotear mas facilmente los datos.
+# Proporción de intervalos que contienen la media real
+prop_bmi <- sucess_bmi / n_muestras
+prop_bgl <- sucess_bgl / n_muestras
+
+cat("Proporción de intervalos que contienen la media real (BMI):", prop_bmi, "\n")
+cat("Proporción de intervalos que contienen la media real (Blood Glucose Level):", prop_bgl, "\n")
+
+```
+
+```{r, eval=FALSE}
+# Plot de Intervalos de confianza
 
 
 ```
@@ -260,13 +307,32 @@ for (i in 1:n_muestras) {
 ```
 
 ```{r, eval=FALSE}
-# Plot de Intervalos de confianza
+# Convertir los datos a dataframes
+df_bmi <- data.frame(
+  mean = list_mean_bmi,
+  lower = list_interval_bmi[, 1],
+  upper = list_interval_bmi[, 2]
+)
 
+df_bgl <- data.frame(
+  mean = list_mean_bgl,
+  lower = list_interval_bgl[, 1],
+  upper = list_interval_bgl[, 2]
+)
 
-```
+# Gráfico para BMI
+ggplot(df_bmi, aes(x = 1:n_muestras, y = mean)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+  geom_hline(yintercept = real_mean_bmi, color = "red", linetype = "dashed") +
+  labs(title = "Intervalos de Confianza para BMI", x = "Muestra", y = "Media BMI")
 
-```{r, eval=FALSE}
-# Plot de proporción de CI
+# Gráfico para Blood Glucose Level
+ggplot(df_bgl, aes(x = 1:n_muestras, y = mean)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+  geom_hline(yintercept = real_mean_bgl, color = "red", linetype = "dashed") +
+  labs(title = "Intervalos de Confianza para Blood Glucose Level", x = "Muestra", y = "Media Blood Glucose Level")
 
 ```
 
