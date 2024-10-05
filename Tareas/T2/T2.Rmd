@@ -215,13 +215,13 @@ Una forma de estimar la distribución de la media de una población es a través
 
 **Hints**: 
 
-- Para comparar comparar las 2 estimaciones puede ser útil normalizar ``bmi`` y ``blood_glucose_level`` a una misma escala.
+- Para comparar las 2 estimaciones puede ser útil normalizar ``bmi`` y ``blood_glucose_level`` a una misma escala.
 - Para realizar la `sampling distribution` podría serle útil el comando `sample()`.
 - Puede ser útil generar un dataframe para graficar con ggplot2.
 
 **Respuesta:**
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 
 # Definimos tamaños de muestreo
 tamano_muestra = 100
@@ -229,18 +229,16 @@ n_muestras = 5000
 
 # Inicializamos estructuras necesarias
 list_mean_bmi = vector()
-list_interval_bmi = vector()
-list_typeCI_bmi = vector()
-list_prop_bmi = vector()
+list_interval_bmi_left = vector()
+list_interval_bmi_right = vector()
 sucess_bmi = 0
 
 list_mean_bgl = vector()
-list_interval_bgl = vector()
-list_typeCI_bgl = vector()
-list_prop_bgl = vector()
+list_interval_bgl_left = vector()
+list_interval_bgl_right = vector()
 sucess_bgl = 0
 
-# Obtenemos la media y desviación estándar de cada columna
+# Obtenemos la media y desviación estándar de la población real
 real_mean_bmi <- mean(datos$bmi)
 real_sd_bmi <- sd(datos$bmi)
 
@@ -262,24 +260,25 @@ for (i in 1:n_muestras) {
   sd_bmi <- sd(sample_bmi)
   sd_bgl <- sd(sample_bgl)
   
-  # Calculating confidence intervals for bmi
+  # Calculating bmi confidence interval
   margin_error_bmi <- 1.96 * (sd_bmi / sqrt(tamano_muestra))
   ci_lower_bmi <- mean(sample_bmi) - margin_error_bmi
   ci_upper_bmi <- mean(sample_bmi) + margin_error_bmi
-  list_interval_bmi <- rbind(list_interval_bmi, c(ci_lower_bmi, ci_upper_bmi))
+  list_interval_bmi_left <- rbind(list_interval_bmi_left, ci_lower_bmi)
+  list_interval_bmi_right <- rbind(list_interval_bmi_right, ci_upper_bmi) 
   
-  # Calculating confidence intervals for blood_glucose_level
+  # Calculating bgl confidence interval
   margin_error_bgl <- 1.96 * (sd_bgl / sqrt(tamano_muestra))
   ci_lower_bgl <- mean(sample_bgl) - margin_error_bgl
   ci_upper_bgl <- mean(sample_bgl) + margin_error_bgl
-  list_interval_bgl <- rbind(list_interval_bgl, c(ci_lower_bgl, ci_upper_bgl))
+  list_interval_bgl_left <- rbind(list_interval_bgl_left, ci_lower_bgl)
+  list_interval_bgl_right <- rbind(list_interval_bgl_right, ci_upper_bgl)
   
-  # Verifying if the real mean is within the confidence interval for bmi
+  # Verify if the real mean is within the confidence interval
   if (ci_lower_bmi <= real_mean_bmi && ci_upper_bmi >= real_mean_bmi) {
     sucess_bmi <- sucess_bmi + 1
   }
   
-  # Verifying if the real mean is within the confidence interval for blood_glucose_level
   if (ci_lower_bgl <= real_mean_bgl && ci_upper_bgl >= real_mean_bgl) {
     sucess_bgl <- sucess_bgl + 1
   }
@@ -292,52 +291,56 @@ prop_bgl <- sucess_bgl / n_muestras
 cat("Proporción de intervalos que contienen la media real (BMI):", prop_bmi, "\n")
 cat("Proporción de intervalos que contienen la media real (Blood Glucose Level):", prop_bgl, "\n")
 
-```
-
-```{r, eval=FALSE}
-# Plot de Intervalos de confianza
-
-
-```
-
-```{r, eval=FALSE}
-# Plot de Intervalos de confianza
-
-
-```
-
-```{r, eval=FALSE}
 # Convertir los datos a dataframes
 df_bmi <- data.frame(
   mean = list_mean_bmi,
-  lower = list_interval_bmi[, 1],
-  upper = list_interval_bmi[, 2]
+  lower = list_interval_bmi_left,
+  upper = list_interval_bmi_right
 )
 
 df_bgl <- data.frame(
   mean = list_mean_bgl,
-  lower = list_interval_bgl[, 1],
-  upper = list_interval_bgl[, 2]
+  lower = list_interval_bgl_left,
+  upper = list_interval_bgl_right
 )
 
+df_bmi <- head(df_bmi, 100)
+df_bgl <- head(df_bgl, 100)
+
+# Columna que nos indica si la media real está dentro del intervalo de confianza calculado
+df_bmi$outside_ci <- ifelse(df_bmi$lower > real_mean_bmi | df_bmi$upper < real_mean_bmi, "Fuera", "Dentro")
+df_bgl$outside_ci <- ifelse(df_bgl$lower > real_mean_bgl | df_bgl$upper < real_mean_bgl, "Fuera", "Dentro")
+
+# Normalización de las columnas
+# Esto no lo usé al final pero lo dejé igual
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+# Plot de Intervalos de confianza
 # Gráfico para BMI
-ggplot(df_bmi, aes(x = 1:n_muestras, y = mean)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
-  geom_hline(yintercept = real_mean_bmi, color = "red", linetype = "dashed") +
-  labs(title = "Intervalos de Confianza para BMI", x = "Muestra", y = "Media BMI")
+ggplot(df_bmi, aes(y = 1:100, x = mean)) +
+  geom_point(aes(color = outside_ci)) +
+  geom_errorbarh(aes(xmin = lower, xmax = upper, color = outside_ci), height = 0.2) +
+  scale_color_manual(values = c("Dentro" = "black", "Fuera" = "red")) +
+  geom_vline(xintercept = real_mean_bmi, color = "red", linetype = "dashed") + 
+  labs(title = "Intervalos de Confianza para BMI", x = "Valor", y = "Muestra") +
+  theme_minimal()
 
+# Plot de Intervalos de confianza
 # Gráfico para Blood Glucose Level
-ggplot(df_bgl, aes(x = 1:n_muestras, y = mean)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
-  geom_hline(yintercept = real_mean_bgl, color = "red", linetype = "dashed") +
-  labs(title = "Intervalos de Confianza para Blood Glucose Level", x = "Muestra", y = "Media Blood Glucose Level")
-
+ggplot(df_bgl, aes(y = 1:100, x = mean)) +
+  geom_point(aes(color = outside_ci)) +
+  geom_errorbarh(aes(xmin = lower, xmax = upper, color = outside_ci), height = 0.2) +
+  scale_color_manual(values = c("Dentro" = "black", "Fuera" = "red")) +
+  geom_vline(xintercept = real_mean_bgl, color = "red", linetype = "dashed") +
+  labs(title = "Intervalos de Confianza para Blood Glucose Level", x = "Valor", y = "Muestra") +
+  theme_minimal()
 ```
 
 > Respuesta
-
+La proporción de intervalos que contienen la media real parece ser muy buena y similar para ambas variables (Cercana al 94%). En general, ambas variables parecen mostrar resultados proporcionalmente similares a pesar de estar en una escala disitinta. Ambas variables suelen mostrar una cantidad baja de intervalos que no contienen la media real, a pesar de estar en una escala de magnitud distinta. Esto se debe a que se están haciendo la misma cantidad de experimentos, y estos al ser muchos, tienden a mostrar una proporción positiva en cuanto a contener la media real dentro del intervalo de confianza. 
+ 
 ### Pregunta 3: Estimación de Máxima Verosimilitud
 
 El objetivo de esta parte será obtener los parámetros de las distribuciones de la media y la mediana de ``bmi``. Para responder la pregunta realice los siguientes puntos:
