@@ -389,11 +389,11 @@ probEmpirica <- function(alpha,m){
 
   res <-... #Resultados de los experimentos
   
-  # Puede agergar todo el codigo que estime conveniente para calcular la probabilidad empirica
+  # Puede agregar todo el codigo que estime conveniente para calcular la probabilidad empírica
   ...
   ...
   #
-  prob <-... # Probabilidad empirica
+  prob <-... # Probabilidad empírica
   
   return(prob)
   
