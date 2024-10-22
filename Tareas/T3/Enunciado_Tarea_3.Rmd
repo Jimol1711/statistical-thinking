@@ -11,8 +11,8 @@ output:
 <center><strong>CC6104: Statistical Thinking</strong></center>
 #### **Integrantes :** 
 
-- Alumno 1
-- Alumno 2
+- Franco Cattani
+- Juan Molina
 
 #### **Cuerpo Docente:**
 
