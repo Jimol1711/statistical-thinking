@@ -387,18 +387,19 @@ probEmpirica <- function(alpha,m){
   n <- 10000 # Cantidad de veces que se va a repetir el experimento para estimar la probabilidad, pueden cambiar este valor si lo desean
   
 
-  res <-... #Resultados de los experimentos
+  res <-rbinom(n, m, alpha) #Resultados de los experimentos
   
   # Puede agregar todo el codigo que estime conveniente para calcular la probabilidad empírica
-  ...
-  ...
+  # ...
+  # ...
   #
-  prob <-... # Probabilidad empírica
+  prob <- length(res[res>0]) / n # Probabilidad empírica
   
   return(prob)
   
 }
 
+p <- probEmpirica(1/2, 10)
 ```
 
 ---
@@ -431,10 +432,93 @@ b) Estudie si el modelo multivariable posee mejor desempeño que el modelo simpl
 **Nota:** No esta permitido utilizar comandos que obtengan los valores solicitados directamente a menos que se le permita en la pregunta.
 
 ```{r}
-lm_reg <- function(X, Y){
+# Parte I.
+
+# Separate smokers from non-smokers
+insurance <- read.csv("insurance.csv", stringsAsFactors = T)
+
+smokers <- insurance[insurance$smoker == "yes",]
+non_smokers <- insurance[insurance$smoker == "no",]
+
+# Calculate cors
+cor_smokers <- cor(smokers %>% select(age, bmi, children, charges))
+cor_smokers
+
+cor_no_smokers <- cor(non_smokers %>% select(age, bmi, children, charges))
+cor_no_smokers
+
+# Linear model
+lm_reg <- function(X, Y) {
+  n <- length(Y)
   
+  # Calcular las sumas necesarias
+  sum_X <- sum(X)
+  sum_Y <- sum(Y)
+  sum_XY <- sum(X * Y)
+  sum_X2 <- sum(X^2)
   
+  # Calcular los coeficientes beta_1 (pendiente) y beta_0 (intersección)
+  beta_1 <- (n * sum_XY - sum_X * sum_Y) / (n * sum_X2 - sum_X^2)
+  beta_0 <- (sum_Y - beta_1 * sum_X) / n
+  
+  # Devolver los coeficientes
+  return(c(beta_0, beta_1))
 }
+
+# FFunction to make predictions
+predict_lm <- function(X, coefficients) {
+  return(coefficients[1] + coefficients[2] * X)
+}
+
+# Adjust model
+coefficients_smokers <- lm_reg(smokers$bmi, smokers$charges)
+cat("\nIntercept (beta_0) smokers:", coefficients_smokers[1], "\n")
+cat("Slope (beta_1) smokers:", coefficients_smokers[2], "\n")
+
+coefficients_non_smokers <- lm_reg(non_smokers$bmi, non_smokers$charges)
+cat("\nIntercept (beta_0) smokers:", coefficients_non_smokers[1], "\n")
+cat("Slope (beta_1) smokers:", coefficients_non_smokers[2], "\n")
+
+get_R_squared <- function(SSE, SST, Y, X, coefs) {
+  
+  preds <- predict_lm(X, coefs)
+  SSE <- sum((Y - preds)^2)
+  SST <- sum((Y - mean(Y))^2)
+  
+  r_squared <- 1 - (SSE / SST)
+  n <- length(Y)
+  p <- 1
+  r_squared_adjusted <- 1 - ((1 - r_squared) * (n - 1) / (n - p - 1))
+  
+  return(c(r_squared, r_squared_adjusted))
+}
+
+smokers_r_squared <- get_R_squared(SSE_smokers, SST_smokers, smokers$charges, smokers$bmi, coefficients_smokers)
+non_smokers_r_squared <- get_R_squared(SSE_non_smokers, SST_non_smokers, non_smokers$charges, non_smokers$bmi, coefficients_non_smokers)
+
+cat("\nR² smokers:", smokers_r_squared[1], "\n")
+cat("R² adjusted smokers:", smokers_r_squared[2], "\n")
+
+cat("\nR² non smokers:", non_smokers_r_squared[1], "\n")
+cat("R² adjusted non smokers:", non_smokers_r_squared[2], "\n")
+
+# Smokers scatterplot
+ggplot(smokers, aes(x = bmi, y = charges)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(title = "Regresión lineal: Gastos Médicos vs. IMC (fumadores)",
+       x = "Índice de Masa Corporal (BMI)",
+       y = "Gastos Médicos (Charges)") +
+  theme_minimal()
+
+# Non smokers scatterplot
+ggplot(non_smokers, aes(x = age, y = charges)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(title = "Regresión lineal: Gastos Médicos vs. IMC (No fumadores)",
+       x = "Edad (Age)",
+       y = "Gastos Médicos (Charges)") +
+  theme_minimal()
 ```
 
 
