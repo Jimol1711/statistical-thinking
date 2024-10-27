@@ -431,7 +431,11 @@ b) Estudie si el modelo multivariable posee mejor desempeño que el modelo simpl
 
 **Nota:** No esta permitido utilizar comandos que obtengan los valores solicitados directamente a menos que se le permita en la pregunta.
 
-```{r}
+## Respuesta
+
+Las variables escogidas son bmi para fumadores (ya que es un indicador de salud) y age para no fumadores (ya que los cargos tienden a aumentar con la edad, independiente de si fuman o no).
+ 
+```{r, eval=TRUE}
 # Parte I.
 
 # Separate smokers from non-smokers
@@ -475,7 +479,7 @@ coefficients_smokers <- lm_reg(smokers$bmi, smokers$charges)
 cat("\nIntercept (beta_0) smokers:", coefficients_smokers[1], "\n")
 cat("Slope (beta_1) smokers:", coefficients_smokers[2], "\n")
 
-coefficients_non_smokers <- lm_reg(non_smokers$bmi, non_smokers$charges)
+coefficients_non_smokers <- lm_reg(non_smokers$age, non_smokers$charges)
 cat("\nIntercept (beta_0) smokers:", coefficients_non_smokers[1], "\n")
 cat("Slope (beta_1) smokers:", coefficients_non_smokers[2], "\n")
 
@@ -494,7 +498,7 @@ get_R_squared <- function(SSE, SST, Y, X, coefs) {
 }
 
 smokers_r_squared <- get_R_squared(SSE_smokers, SST_smokers, smokers$charges, smokers$bmi, coefficients_smokers)
-non_smokers_r_squared <- get_R_squared(SSE_non_smokers, SST_non_smokers, non_smokers$charges, non_smokers$bmi, coefficients_non_smokers)
+non_smokers_r_squared <- get_R_squared(SSE_non_smokers, SST_non_smokers, non_smokers$charges, non_smokers$age, coefficients_non_smokers)
 
 cat("\nR² smokers:", smokers_r_squared[1], "\n")
 cat("R² adjusted smokers:", smokers_r_squared[2], "\n")
@@ -515,13 +519,82 @@ ggplot(smokers, aes(x = bmi, y = charges)) +
 ggplot(non_smokers, aes(x = age, y = charges)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, color = "blue") +
-  labs(title = "Regresión lineal: Gastos Médicos vs. IMC (No fumadores)",
+  labs(title = "Regresión lineal: Gastos Médicos vs. Edad (No fumadores)",
        x = "Edad (Age)",
        y = "Gastos Médicos (Charges)") +
   theme_minimal()
 ```
 
+```{r, eval=TRUE}
+# Parte II
+# Usamos la regresión multivariable con representación matricial
+# Selección de las variables independientes (predictoras) y dependiente
+X_smokers <- smokers %>% select(age, bmi)
+Y_smokers <- smokers$charges
 
+X_non_smokers <- non_smokers %>% select(age, bmi)
+Y_non_smokers <- non_smokers$charges
+
+# Función para calcular la regresión lineal múltiple
+lm_reg_multi <- function(X, Y) {
+  X <- as.matrix(cbind(Intercept = 1, X))
+  Y <- as.matrix(Y)
+  
+  # Calcular los coeficientes usando la fórmula de mínimos cuadrados
+  beta <- solve(t(X) %*% X) %*% t(X) %*% Y
+  return(beta)
+}
+
+# Entrenar el modelo para fumadores
+coefficients_smokers <- lm_reg_multi(X_smokers, Y_smokers)
+cat("\nCoeficientes para fumadores:\n")
+cat("Intercepto (beta_0):", coefficients_smokers[1], "\n")
+cat("Edad (beta_1):", coefficients_smokers[2], "\n")
+cat("BMI (beta_2):", coefficients_smokers[3], "\n")
+
+# Entrenar el modelo para no fumadores
+coefficients_non_smokers <- lm_reg_multi(X_non_smokers, Y_non_smokers)
+cat("\nCoeficientes para no fumadores:\n")
+cat("Intercepto (beta_0):", coefficients_non_smokers[1], "\n")
+cat("Edad (beta_1):", coefficients_non_smokers[2], "\n")
+cat("BMI (beta_2):", coefficients_non_smokers[3], "\n")
+
+# Función para hacer predicciones con múltiples variables
+predict_lm_multi <- function(X, coefficients) {
+  X <- as.matrix(cbind(Intercept = 1, X))
+  return(X %*% coefficients)
+}
+
+# Función para calcular R² y R² ajustado
+get_R_squared_multi <- function(Y, X, coefs) {
+  preds <- predict_lm_multi(X, coefs)
+  SSE <- sum((Y - preds)^2)
+  SST <- sum((Y - mean(Y))^2)
+  
+  r_squared <- 1 - (SSE / SST)
+  n <- length(Y)
+  p <- ncol(X)
+  r_squared_adjusted <- 1 - ((1 - r_squared) * (n - 1) / (n - p - 1))
+  
+  return(c(r_squared, r_squared_adjusted))
+}
+
+# Evaluar el modelo para fumadores
+r_squared_smokers <- get_R_squared_multi(Y_smokers, X_smokers, coefficients_smokers)
+cat("\nR² para fumadores:", r_squared_smokers[1], "\n")
+cat("R² ajustado para fumadores:", r_squared_smokers[2], "\n")
+
+# Evaluar el modelo para no fumadores
+r_squared_non_smokers <- get_R_squared_multi(Y_non_smokers, X_non_smokers, coefficients_non_smokers)
+cat("\nR² para no fumadores:", r_squared_non_smokers[1], "\n")
+cat("R² ajustado para no fumadores:", r_squared_non_smokers[2], "\n")
+
+summary(lm(smokers$charges ~ smokers$bmi + smokers$age))
+summary(lm(non_smokers$charges ~ non_smokers$bmi + non_smokers$age))
+```
+Notamos que aumenta considerablemente el valor de R^2 llegando a 0.75 en el caso de la regresión multivaribale. Esto se debe a la agregación de una nueva variable que aporta mayor información del comportamiento. Algo a notar si es que para el caso de no fumadores el valor de R^2 no varía, lo que nos indica que no existe mayor correlación entre la variable cargos y las variables escogidas juntas.
+
+Sí sería recomendable utilizar los modelos para la predicción ya que estos coinciden con los entregado por el comando lm() y la evaluación es mejor en términos de la métrica de R^2.
 
 &nbsp;
 <hr />
