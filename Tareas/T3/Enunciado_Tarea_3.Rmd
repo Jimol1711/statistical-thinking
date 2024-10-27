@@ -382,26 +382,75 @@ head(data)
 **Respuesta Aquí:**
 
 ```{r}
-
 probEmpirica <- function(alpha,m){
-  n <- 10000 # Cantidad de veces que se va a repetir el experimento para estimar la probabilidad, pueden cambiar este valor si lo desean
-  
-
+  n <- 10000 # Cantidad de veces que se va a repetir el experimento para estimar la probabilidad
   res <-rbinom(n, m, alpha) #Resultados de los experimentos
-  
-  # Puede agregar todo el codigo que estime conveniente para calcular la probabilidad empírica
-  # ...
-  # ...
-  #
   prob <- length(res[res>0]) / n # Probabilidad empírica
-  
   return(prob)
   
 }
 
-p <- probEmpirica(1/2, 10)
-```
+# Real probability
+probReal <- function(alpha, m) {
+  return(1 - (1 - alpha)^m)
+}
 
+# Different values for m
+m_values <- 1:50
+alpha <- 0.05
+
+# Calculate both probabilities 
+empirical_probs <- sapply(m_values, function(m) probEmpirica(alpha, m))
+real_probs <- sapply(m_values, function(m) probReal(alpha, m))
+
+# Graficar resultados
+plot(m_values, empirical_probs, type = "o", col = "blue", pch = 16, ylim = c(0, 1),
+     xlab = "Número de ensayos (m)", ylab = "Probabilidad",
+     main = "Comparación de Probabilidad Empírica y Real")
+lines(m_values, real_probs, type = "o", col = "red", pch = 17)
+legend("bottomright", legend = c("Probabilidad Empírica", "Probabilidad Real"),
+       col = c("blue", "red"), pch = c(16, 17), lty = 1)
+```
+Notamos que los resultados son muy parecidos, realizando 10000 experimentos para la probabilidad empírica. Si se disminuye el número de experimento es cierto que aumenta la variabilidad de esta, pero sigue la misma tendencia de ir convergiendo a 1 a medida que aumenta el número de ensayos.
+
+El valor de alpha solo influye en la velocidad con la que ambas probabilidades convergen a 1, pero independientemente de este valor, siempre se produce que ambas probabilidades convergen eventualmente a 1 a la misma velocidad. Si se disminuye alpha convergen más lento y si se aumenta convergen más rápido. Esto nos indica que si se podrían realizar más experimentos para obtener resultados significativos, pero el precio a pagar sería reducir el nivel de significancia.
+
+No es útil, ya que uno no quiere tener una alta probabilidad de obtener resultados significativos por azar, y este método claramente expone que al aumentar los ensayos aumenta esta probabilidad (Y mucho).
+
+```{r}
+# Código modificado utilizando Bonferroni correction
+probEmpiricaBonferroni <- function(alpha,m){
+  actual_alpha <- alpha / m
+  n <- 10000 # Cantidad de veces que se va a repetir el experimento para estimar la probabilidad
+  res <-rbinom(n, m, actual_alpha) #Resultados de los experimentos
+  prob <- length(res[res>0]) / n # Probabilidad empírica
+  return(prob)
+  
+}
+
+# Real probability
+probRealBonferroni <- function(alpha, m) {
+  actual_alpha <- alpha / m
+  return(1 - (1 - actual_alpha)^m)
+}
+
+# Different values for m
+m_values_b <- 1:50
+alpha_b <- 0.05
+
+# Calculate both probabilities 
+empirical_probs_b <- sapply(m_values_b, function(m) probEmpiricaBonferroni(alpha_b, m))
+real_probs_b <- sapply(m_values_b, function(m) probRealBonferroni(alpha_b, m))
+
+# Graficar resultados
+plot(m_values_b, empirical_probs_b, type = "o", col = "blue", pch = 16, ylim = c(0, 1),
+     xlab = "Número de ensayos (m)", ylab = "Probabilidad",
+     main = "Comparación de Probabilidad Empírica y Real con Bonferroni Correction")
+lines(m_values_b, real_probs_b, type = "o", col = "red", pch = 17)
+legend("bottomright", legend = c("Probabilidad Empírica", "Probabilidad Real"),
+       col = c("blue", "red"), pch = c(16, 17), lty = 1)
+```
+Vemos que la probabilidad se mantiene consistenmente cercana a 0 a medida que aumenta m, lo cual nos indica que el método de Bonferroni si es efectivo para evitar la obtención de falsos positivos. El problema es que si se aumenta mucho m, aumenta la probabilidad de obtener errores de tipo II, es decir, falsos negativos, ya que el método puede ser muy conservador (Solicitando un valor de significancia innecesariamente bajo).
 ---
 
 ### Pregunta 4: Regression Lineal sin comandos.
