@@ -374,14 +374,14 @@ $$\mathbb{P}(\text{obtener al menos resultado significativo por azar})=1-(1-\alp
 - [ ] Ejecute el siguiente código que calcula el $p$-valor usual y el $p$-valor asociado a Bonferroni (que corresponde al $p$-valor * m donde $m$ es el numero de experimentos), ¿Cuantos valores que originalmente se hubieran aceptado fueron rechazados si $\alpha = 0.05$? ¿Que implica esto sobre el nivel de falsos negativos de este metodo?
 
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 data <- read.csv("ratones.csv",sep= ";", stringsAsFactors = T)
 head(data)
 ```
 
 **Respuesta Aquí:**
 
-```{r}
+```{r, eval=TRUE}
 probEmpirica <- function(alpha,m){
   n <- 10000 # Cantidad de veces que se va a repetir el experimento para estimar la probabilidad
   res <-rbinom(n, m, alpha) #Resultados de los experimentos
@@ -417,7 +417,7 @@ El valor de alpha solo influye en la velocidad con la que ambas probabilidades c
 
 No es útil, ya que uno no quiere tener una alta probabilidad de obtener resultados significativos por azar, y este método claramente expone que al aumentar los ensayos aumenta esta probabilidad (Y mucho).
 
-```{r}
+```{r, eval=TRUE}
 # Código modificado utilizando Bonferroni correction
 probEmpiricaBonferroni <- function(alpha,m){
   actual_alpha <- alpha / m
@@ -451,6 +451,10 @@ legend("bottomright", legend = c("Probabilidad Empírica", "Probabilidad Real"),
        col = c("blue", "red"), pch = c(16, 17), lty = 1)
 ```
 Vemos que la probabilidad se mantiene consistenmente cercana a 0 a medida que aumenta m, lo cual nos indica que el método de Bonferroni si es efectivo para evitar la obtención de falsos positivos. El problema es que si se aumenta mucho m, aumenta la probabilidad de obtener errores de tipo II, es decir, falsos negativos, ya que el método puede ser muy conservador (Solicitando un valor de significancia innecesariamente bajo).
+
+```{r, eval=TRUE}
+# Código 
+```
 ---
 
 ### Pregunta 4: Regression Lineal sin comandos.
