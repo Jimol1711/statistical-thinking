@@ -377,7 +377,21 @@ $$\mathbb{P}(\text{obtener al menos resultado significativo por azar})=1-(1-\alp
 ```{r, eval=TRUE}
 data <- read.csv("ratones.csv",sep= ";", stringsAsFactors = T)
 head(data)
+
+# p.value
+data$p.value <- as.numeric(gsub(",", ".", as.character(data$p.value)))
+
+# Count rows where p.value < 0.05
+cat("Rejected values without Bonferroni:", sum(data$p.value < 0.05, na.rm = TRUE))
+
+# p.value.Bonferroni
+data$p.value.Bonferroni <- as.numeric(gsub(",", ".", as.character(data$p.value.Bonferroni)))
+
+# Count rows where p.value.Bonferroni < 0.05
+cat("\nRejected values with Bonferroni:", sum(data$p.value.Bonferroni < 0.05, na.rm = TRUE))
+
 ```
+Notamos que sin la corrección de Bonferroni, 8 valores son rechazados mientras que la corrección solo rechaza 2. Esto nos asegura robustez frente a la posibilidad de falsos positivos. Sin embargo, se aumenta la probabilidad de falsos negativos ya que se rechaza menos la hipótesis nula. Por lo tanto, es coherente concluir que el método de Bonferroni es útil si se quieren evitar errores de tipo I, más puede ser arriesgado para evitar errores de tipo II.
 
 **Respuesta Aquí:**
 
@@ -452,9 +466,6 @@ legend("bottomright", legend = c("Probabilidad Empírica", "Probabilidad Real"),
 ```
 Vemos que la probabilidad se mantiene consistenmente cercana a 0 a medida que aumenta m, lo cual nos indica que el método de Bonferroni si es efectivo para evitar la obtención de falsos positivos. El problema es que si se aumenta mucho m, aumenta la probabilidad de obtener errores de tipo II, es decir, falsos negativos, ya que el método puede ser muy conservador (Solicitando un valor de significancia innecesariamente bajo).
 
-```{r, eval=TRUE}
-# Código 
-```
 ---
 
 ### Pregunta 4: Regression Lineal sin comandos.
