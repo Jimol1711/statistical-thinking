@@ -3,6 +3,7 @@ title: "Tarea 3"
 output:
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 
 ![](banner.png)
@@ -67,7 +68,8 @@ En la siguiente sección deberá resolver cada uno de los experimentos computaci
 
 Para el desarrollo preste mucha atención en los enunciados, ya que se le solicitará la implementación de métodos sin uso de funciones predefinidas. Por otro lado, Las librerías permitidas para desarrollar de la tarea 3 son las siguientes:
 
-```{r, eval=FALSE}
+```{r}
+
 # Manipulación de estructuras
 library(tidyverse)
 library(dplyr)
@@ -170,67 +172,124 @@ Para el diseño de experimentos y/o comprobación de sus métodos puede serles �
 A su vez, en estas fuentes se incluyen las visualizaciones esperadas de las distribuciones normales para cada experimento. Estos experimentos principalmente deben consistir en ver cómo cambia la potencia al cambiar alguno de los parámetros (por ejemplo $\alpha$), y se espera que se entregue un comentario acorde.
 
 **Respuesta**
-```{r, eval=FALSE}
-# Power Function, El esqueleto posee como ejemplo como obtener la potencia de un z-test one-sample.
-# Si utiliza este esqueleto deberá comentar la función que cumple cada una de las partes entregadas
+```{r}
 power.z.test <- function(n1=NULL, sigma1=0.5, 
-                         n2=NULL,sigma2=0.5, mu.Ha=0 , 
+                         n2=NULL, sigma2=0.5, mu.Ha=0 , 
                          mu.True=0, alfa=0.05){
-  if(){
-    # 
-    Z = qnorm(1-alfa)
+  
+  # Si n2 es NULL, se realiza un Z-test de una muestra (one-sample)
+  if(is.null(n2)){
     
-    denominador = sigma1/sqrt(n1)
-    X_bar = Z*denominador + mu.Ha
+    # Calcular el valor crítico de Z para el alfa dado (solo cola superior)
+    Z_crit = qnorm(1 - alfa) 
     
-    numerador = X_bar - mu.True
-    Z = numerador/denominador
+    # Cálculo del denominador para el Z-score
+    denom = sigma1 / sqrt(n1)
+    
+    # X_bar es el valor crítico en el que se rechaza la hipótesis nula H0
+    X_bar = Z_crit * denom + mu.Ha
+    
+    # Cálculo del Z-score
+    Z = (X_bar - mu.True) / denom
+    
+    # Potencia del test
     Power = 1 - pnorm(Z)
     
-    # 
-    min_lim = min(rnorm(1000, mean=mu.Ha, sd=denominador)) - 
-      round(min(rnorm(1000, mean=mu.Ha, sd=denominador)))%%10
-    max_lim = max(rnorm(1000, mean=mu.True, sd=denominador)) +
-      round(max(rnorm(1000, mean=mu.True, sd=denominador)))%%10
-      
-    # 
+    # Definir los límites mínimo y máximo para el gráfico de las distribuciones
+    min_lim = min(rnorm(1000, mean = mu.Ha, sd = denom)) - 
+              round(min(rnorm(1000, mean = mu.Ha, sd = denom))) %% 10
+    max_lim = max(rnorm(1000, mean = mu.True, sd = denom)) +
+              round(max(rnorm(1000, mean = mu.True, sd = denom))) %% 10
+    
+    # Crear el gráfico de las distribuciones
     plot <- ggplot(data.frame(x = c(min_lim, max_lim)), aes(x)) + 
-      stat_function(fun = dnorm, args = list(mean = mu.Ha, sd = denominador), 
+      stat_function(fun = dnorm, args = list(mean = mu.Ha, sd = denom), 
                     col='red') +
-      stat_function(fun = dnorm, args = list(mean = mu.True, sd = denominador), 
+      stat_function(fun = dnorm, args = list(mean = mu.True, sd = denom), 
                     col='blue') +
-      stat_function(fun = dnorm, args = list(mean = mu.True, sd = denominador), 
-                    xlim = c(X_bar,max_lim), geom = "area", fill='red') + 
+      stat_function(fun = dnorm, args = list(mean = mu.True, sd = denom), 
+                    xlim = c(X_bar, max_lim), geom = "area", fill='red') +
       geom_vline(xintercept = X_bar, linetype="dotted", size=1) +
-      annotate(x=X_bar, y=+Inf,label="alpha", vjust=2, geom="label") +
+      annotate("label", x=X_bar, y=Inf, label="alpha", vjust=2) +
+      theme_minimal() +
+      ggtitle("H0 vs Ha") + 
+      xlab(expression(bar(X))) + ylab("Densidad")
+    
+  # Si n2 no es NULL, se realiza un Z-test de dos muestras (two-sample)
+  } else {
+  
+    # Calcular el valor crítico de Z para el alfa dado (solo cola superior)
+    Z_crit = qnorm(1 - alfa) 
+    
+    # Cálculo del error estándar
+    denom = sqrt((sigma1^2 / n1) + (sigma2^2 / n2))
+    
+    # X_bar es el valor crítico en el que se rechaza la hipótesis nula H0
+    X_bar = Z_crit * denom + mu.Ha
+    
+    # Cálculo del Z-score
+    Z = (X_bar - mu.True) / denom
+    
+    # Potencia del test
+    Power = 1 - pnorm(Z)
+    
+    # Definir los límites mínimo y máximo para el gráfico de las distribuciones
+    min_lim = min(rnorm(1000, mean = mu.Ha, sd = denom)) - 
+              round(min(rnorm(1000, mean = mu.Ha, sd = denom))) %% 10
+    max_lim = max(rnorm(1000, mean = mu.True, sd = denom)) +
+              round(max(rnorm(1000, mean = mu.True, sd = denom))) %% 10
+    
+    # Crear el gráfico de las distribuciones
+    plot <- ggplot(data.frame(x = c(min_lim, max_lim)), aes(x)) + 
+      stat_function(fun = dnorm, args = list(mean = mu.Ha, sd = denom), 
+                    col='red') +
+      stat_function(fun = dnorm, args = list(mean = mu.True, sd = denom), 
+                    col='blue') +
+      stat_function(fun = dnorm, args = list(mean = mu.True, sd = denom), 
+                    xlim = c(X_bar, max_lim), geom = "area", fill='red') +
+      geom_vline(xintercept = X_bar, linetype="dotted", size=1) +
+      annotate("label", x=X_bar, y=Inf, label="alpha", vjust=2) +
       theme_minimal() +
       ggtitle("H0 vs Ha") +
-      xlab(expression(bar(X))) + ylab("Density")
-    }
+      xlab(expression(bar(X))) + ylab("Densidad")
   }
   
-  if(){
-    #
-    
-    # 
-    if(plot.hypothesis){
-      
-      # 
-      
-      # 
-      plot = ...
-    }
-  }
-  
-  # Como R no permite retornar dos salidas usamos una lista
-  # Los resultados se llaman con $plot o $power
-  return(list(plot=plot,power=Power))
+  # Devolver el gráfico y la potencia como una lista
+  return(list(plot=plot, power=Power))
+}
+
+# Niveles de significancia (alfa) que se van a utilizar en los experimentos
+alfas <- c(0.05, 0.01, 0.1)
+
+# Experimento one-sample:
+
+# Media poblacional verdadera
+mu_true <- 95
+# Media bajo la hipótesis alternativa
+mu_ha <- 100   
+
+# Para cada valor de alfa, se calculan y grafican las distribuciones de H0 y Ha
+for (alfa in alfas) {
+  result <- power.z.test(n1=16, sigma1=16, mu.Ha=mu_ha, mu.True=mu_true, alfa=alfa)
+  print(paste("Gráfico para alfa =", alfa, "en el test one-sample"))
+  print(result$plot)
+}
+
+# Experimento two-sample:
+
+# Media de la hipótesis alternativa para las dos muestras
+mu_ha_two_sample <- 100
+# Diferencia entre las medias poblacionales verdaderas de las dos muestras
+mu_true_two_sample <- 95  
+
+for (alfa in alfas) {
+  result <- power.z.test(n1=16, sigma1=16, n2=16, sigma2=16, 
+                         mu.Ha=mu_ha_two_sample, mu.True=mu_true_two_sample, alfa=alfa)
+  print(paste("Gráfico para alfa =", alfa, "en el test two-sample"))
+  print(result$plot)
 }
 
 
-# Plot de gráfico de potencia
-
-# Experimentos
 ```
 
 ---
@@ -290,72 +349,142 @@ $$\sigma_{PhD} = 20615$$
 df = read.csv('marketing_campaign.csv', sep='\t')
 head(df)
 
+income_master <- df$Income[df$Education == 'Master']
+income_phd <- df$Income[df$Education == 'PhD']
+income_graduation <- df$Income[df$Education == 'Graduation']
+
+# Se quitan los valores nulos para evitar errores
+income_graduation <- na.omit(income_graduation)
+income_master <- na.omit(income_master)
+income_phd <- na.omit(income_phd)
+
+
 # Implementación de Z-test one-sided y two-sided
-# Puede utilizar este esqueleto
 z_test <- function(data1=NULL, sigma1=0.5, data2=NULL, sigma2=0.5, 
-                   mu.Ha=0, test.type = c('one-sided','two-sided'),
+                   mu.Ha=0, test.type = c('menor', 'mayor', 'two-sided'),
                    verbose=TRUE){
+  # Verificación de argumentos
+  if(length(test.type) != 1 || !(test.type %in% c('menor', 'mayor', 'two-sided'))){
+    stop("Por favor, escoge un tipo de Test válido: 'menor', 'mayor' o 'two-sided'.")
+  }
   
-  if(length(test.type)>=2){
-    print("Por favor escoge un tipo de Test: ´one-sided´ o ´two-sided´ ")
-    return()
-  }
-  else if(length(test.type)==1 && !(test.type %in% c('menor','mayor','two-sided'))){
-    print("Por favor escoge un tipo de Test: ´menor´, ´mayor´ o ´two-sided´")
-    return()
-  }
-  else if(is.null(data2)){
+  # One-sample Z-test
+  if(is.null(data2)){
+    n1 <- length(data1)
+    mean_sample <- mean(data1)
+    Z_score <- (mean_sample - mu.Ha) / (sigma1 / sqrt(n1))
     
-    # P-value
-    if(test.type=='menor'){
-
-    }
-    else if(test.type=='mayor'){
-
-    }
-    else if(test.type=='two-sided'){
-
+    # Cálculo del p-valor
+    if(test.type == 'menor'){
+      p_value <- pnorm(Z_score)
+    } else if(test.type == 'mayor'){
+      p_value <- 1 - pnorm(Z_score)
+    } else if(test.type == 'two-sided'){
+      p_value <- 2 * (1 - pnorm(abs(Z_score)))
     }
     
-    # Texto de Salida
+    # Salida opcional
     if(verbose){
-      cat("\tOne-sample Z-Test:\n\nData analizada:",
-                      deparse(substitute(data1)), "\nZ=", Z_score, 
-                      "P-value=", p_value, "\n\n",sep=" ")
+      cat("\tOne-sample Z-Test:\n\nData analizada:", deparse(substitute(data1)), 
+          "\nZ =", Z_score, "P-value =", p_value, "\n\n")
     }
     
     return(p_value)
     
-  }
-  else if(!is.null(data2)){
-    # Hypothesis test
+  } else {  # Two-sample Z-test
+    n1 <- length(data1)
+    n2 <- length(data2)
+    mean1 <- mean(data1)
+    mean2 <- mean(data2)
+    Z_score <- ((mean1 - mean2) - mu.Ha) / sqrt((sigma1^2 / n1) + (sigma2^2 / n2))
     
-    # p-value
-    if(test.type=='menor'){
-      p_value = ...
+    # Cálculo del p-valor
+    if(test.type == 'menor'){
+      p_value <- pnorm(Z_score)
+    } else if(test.type == 'mayor'){
+      p_value <- 1 - pnorm(Z_score)
+    } else if(test.type == 'two-sided'){
+      p_value <- 2 * (1 - pnorm(abs(Z_score)))
     }
-    else if(test.type=='mayor'){
-      p_value = ...
-    }
-    else if(test.type=='two-sided'){
-      p_value = ...
-    }
-    # Texto de Salida
+    
+    # Salida opcional
     if(verbose){
-      cat("\tTwo-sample Z-Test:\n\nData analizada:",
-                      deparse(substitute(data1)),"y",
-                      deparse(substitute(data2)), "\nZ=", 
-                      Z_score, "P-value=", p_value, "\n\n",sep=" ")
+      cat("\tTwo-sample Z-Test:\n\nData analizada:", deparse(substitute(data1)),
+          "y", deparse(substitute(data2)), "\nZ =", Z_score, 
+          "P-value =", p_value, "\n\n")
     }
-  
+    
     return(p_value)
   }
 }
 ```
 
 ```{r}
-z.test.multiple_testing <- function(){
+z.test.multiple_testing <- function(list_data, list_sigma, test.type = 'two-sided', alfa = 0.05){
+  # Combinaciones de los grupos a comparar
+  combinations <- combn(names(list_data), 2)
+  p_values <- c()
+  results <- data.frame()
+  
+  # Iterar sobre todas las combinaciones posibles de pares de grupos
+  for(i in 1:ncol(combinations)){
+    data1 <- list_data[[combinations[1, i]]]
+    data2 <- list_data[[combinations[2, i]]]
+    sigma1 <- list_sigma[[combinations[1, i]]]
+    sigma2 <- list_sigma[[combinations[2, i]]]
+    
+    # Realiza el Z-test para cada par de grupos
+    p_value <- z_test(data1, sigma1, data2, sigma2, mu.Ha = 0, test.type = test.type, verbose = FALSE)
+    p_values <- c(p_values, p_value)
+    
+    # Almacena los resultados en un data frame
+    results <- rbind(results, data.frame(Grupo1 = combinations[1, i], Grupo2 = combinations[2, i],
+                                         P_Value = p_value))
+  }
+  # Evaluar significancia
+  results$Significant <- results$P_Value < alfa   
+
+  return(results)
 }
+
+# Primer experimento:
+
+sigma_graduation <- 28180  # Desviación estándar poblacional
+
+# Test two-sided
+p_value_two_sided <- z_test(data1 = income_graduation, sigma1 = sigma_graduation, 
+                            mu.Ha = 52000, test.type = 'two-sided')
+
+# Test one-sided (mayor)
+p_value_one_sided_mayor <- z_test(data1 = income_graduation, sigma1 = sigma_graduation, 
+                                  mu.Ha = 52000, test.type = 'mayor')
+
+# Test one-sided (menor)
+p_value_one_sided_menor <- z_test(data1 = income_graduation, sigma1 = sigma_graduation, 
+                                  mu.Ha = 52000, test.type = 'menor')
+
+# Resultados
+cat("P-valor (two-sided):", p_value_two_sided, "\n")
+cat("P-valor (one-sided mayor):", p_value_one_sided_mayor, "\n")
+cat("P-valor (one-sided menor):", p_value_one_sided_menor, "\n")
+
+# Segundo experimento:
+
+list_data <- list(Graduation = income_graduation,
+                  Master = income_master,
+                  PhD = income_phd)
+
+list_sigma <- list(Graduation = 28180,
+                   Master = 20160,
+                   PhD = 20615)
+
+# Realiza los múltiples tests
+results <- z.test.multiple_testing(list_data, list_sigma, test.type = 'two-sided', alfa = 0.05)
+
+# Muestra los resultados
+print(results)
+
+
 ```
 
 ### Pregunta 3: Testeando multiples hipotesis y Bonferroni Correction
@@ -374,7 +503,7 @@ $$\mathbb{P}(\text{obtener al menos resultado significativo por azar})=1-(1-\alp
 - [ ] Ejecute el siguiente código que calcula el $p$-valor usual y el $p$-valor asociado a Bonferroni (que corresponde al $p$-valor * m donde $m$ es el numero de experimentos), ¿Cuantos valores que originalmente se hubieran aceptado fueron rechazados si $\alpha = 0.05$? ¿Que implica esto sobre el nivel de falsos negativos de este metodo?
 
 
-```{r, eval=TRUE}
+```{r}
 data <- read.csv("ratones.csv",sep= ";", stringsAsFactors = T)
 head(data)
 
@@ -395,7 +524,7 @@ Notamos que sin la corrección de Bonferroni, 8 valores son rechazados mientras 
 
 **Respuesta Aquí:**
 
-```{r, eval=TRUE}
+```{r}
 probEmpirica <- function(alpha,m){
   n <- 10000 # Cantidad de veces que se va a repetir el experimento para estimar la probabilidad
   res <-rbinom(n, m, alpha) #Resultados de los experimentos
@@ -431,7 +560,7 @@ El valor de alpha solo influye en la velocidad con la que ambas probabilidades c
 
 No es útil, ya que uno no quiere tener una alta probabilidad de obtener resultados significativos por azar, y este método claramente expone que al aumentar los ensayos aumenta esta probabilidad (Y mucho).
 
-```{r, eval=TRUE}
+```{r}
 # Código modificado utilizando Bonferroni correction
 probEmpiricaBonferroni <- function(alpha,m){
   actual_alpha <- alpha / m
@@ -499,7 +628,7 @@ b) Estudie si el modelo multivariable posee mejor desempeño que el modelo simpl
 
 Las variables escogidas son bmi para fumadores (ya que es un indicador de salud) y age para no fumadores (ya que los cargos tienden a aumentar con la edad, independiente de si fuman o no).
  
-```{r, eval=TRUE}
+```{r}
 # Parte I.
 
 # Separate smokers from non-smokers
@@ -589,7 +718,7 @@ ggplot(non_smokers, aes(x = age, y = charges)) +
   theme_minimal()
 ```
 
-```{r, eval=TRUE}
+```{r}
 # Parte II
 # Usamos la regresión multivariable con representación matricial
 # Selección de las variables independientes (predictoras) y dependiente
