@@ -11,8 +11,8 @@ output:
 <center><strong>CC6104: Statistical Thinking</strong></center>
 #### **Integrantes :** 
 
-- Alumno 1
-- Alumno 2
+- Franco Cattani
+- Juan Molina
 
 #### **Cuerpo Docente:**
 
@@ -89,7 +89,7 @@ library(plotly)
 library(gridExtra)
 
 # Análisis bayesiano
-library("rethinking")
+library(rethinking)
 ```
 
 Si no tiene instalada la librería “rethinking”, ejecute las siguientes líneas de código para instalar la librería:
@@ -98,14 +98,13 @@ Si no tiene instalada la librería “rethinking”, ejecute las siguientes lín
 install.packages("rethinking")
 ```
 
-En caso de tener problemas al momento de instalar la librería con el código anterior, utilice las siguiente chunk:
+En caso de tener problemas al momento de instalar la librería con el código anterior, utilice el siguiente chunk:
 
 ```{r, eval=FALSE}
 install.packages(c("mvtnorm","loo","coda"), repos="https://cloud.r-project.org/",dependencies=TRUE)
 options(repos=c(getOption('repos'), rethinking='http://xcelab.net/R'))
 install.packages('rethinking',type='source')
 ```
-
 
 ### Pregunta 1:
 
@@ -336,20 +335,19 @@ Usted sabe un dato extra sobre la información, $\sigma \in [0.5,1.5]$ y, ademá
 - [ ] Modifique el siguiente codigo que permite realizar una grid approximation para $2$ parámetros. Proponga priors para $\mu$ y $\sigma$, justifique su elección.
 
 
-```{r,eval=FALSE}
-# Librerias
-
+```{r}
 # Leer información
 data_notas <- read.csv("notas.csv")
+data_vector <- as.numeric(data_notas$Notas)
 
 # Función para crear likelihood dado mu y sigma
-grid_function <- function(mu,sigma){
-   .... # Funcion de likelihood
+grid_function <- function(mu, sigma){
+   sum(dnorm(data_vector, mean = mu, sd = sigma, log = TRUE))
 }
 
 # Valores de la grilla
-grid_mu <- ...
-grid_sigma <- ...
+grid_mu <- seq(1, 7, length.out = 100)
+grid_sigma <- seq(0.5, 1.5, length.out = 100)
 
 # Se crea la grilla 2d
 data_grid <- expand_grid(grid_mu,grid_sigma)
@@ -360,10 +358,10 @@ data_grid$likelihood <- map2(data_grid$grid_mu,data_grid$grid_sigma, grid_functi
 # Se transforma el forma de map2 a una columna
 data_grid <- unnest(data_grid,cols = c("likelihood"))
 
-
 # Valores de los priors
-prior_mu <- ...
-prior_sigma <-  ...
+prior_mu <- rep(1, length(grid_mu))
+# Se resta 0.5 para mantener el argumento de la distribución en [0,1]
+prior_sigma <- dbeta(grid_sigma - 0.5, shape1 = 3, shape2 = 6)
 
 # Se crea la grilla 2d de priors
 prior <- expand_grid(prior_mu,prior_sigma)
@@ -378,28 +376,37 @@ data_grid$unstd_posterior <-  data_grid$likelihood * data_grid$prior
 # Se estandariza el posterior
 data_grid$posterior <- data_grid$unstd_posterior/sum(data_grid$unstd_posterior)
 
-# Se ajustan los valores de la posterior para que no sean valores tan pequñeos
+# Se ajustan los valores de la posterior para que no sean valores tan pequeños
 data_grid$posterior <- (data_grid$posterior - min(data_grid$posterior))/(max(data_grid$posterior)-min(data_grid$posterior))
+
 
 ```
 
 **Respuesta:**
 
+Para el parámetro $\mu$, que representa la media de las notas, se ha seleccionado un prior uniforme en el rango $([1, 7])$. Al no disponer de información previa que sugiera que ciertos valores de son más probables que otros, es conveniente el uso de esta prior en el intervalo de las notas, de 1 a 7.
 
+Para el parámetro $\sigma$, correspondiente a la desviación estándar, se ha optado por un prior de distribución beta. La elección se fundamenta en la información adicional proporcionada, que indica que $\sigma$ se encuentra en el intervalo $([0.5, 1.5])$ y es más probable que tome valores entre $([0.5, 1])$ que en $((1, 1.5])$. Para representar esto, se ha optado los parámetros $\alpha = 3$ y $\beta = 8$ para aumentar la probabilidad dentro del rango $([0.5, 1])$. Graficamente:
+
+```{r}
+plot(grid_sigma, prior_sigma, type = "l", col = "blue",
+     main = "Prior para sigma usando Beta(3, 8)",
+     xlab = expression(sigma), ylab = "Densidad de probabilidad")
+
+# Añadir una línea horizontal para referencia
+abline(h = 0, col = "gray")
+```
 
 - [ ] Tras haber ejecutado el código de la parte anterior ejecute el siguiente, ¿Que puede decir de los valores de la distribución? Se recomienda hacer modificaciones en el código para realizar un mejor análisis y estudio.
 
 
-```{r, eval=FALSE}
+```{r}
 
 # Punto de referencia
-# Se recomienda cambiar estos valores por unos adecuados que le permitan estudiar
-# Los valores de la distribución de mejor manera
-valor_x <- 1
-valor_y <- 1
+valor_x <- mean(data_vector)
+valor_y <- 0.8
 
-# Grafico
-
+# Gráfico
 punto_comparacion <- tibble(x = valor_x, y = valor_y)
 
 plt <- data_grid %>%
@@ -430,13 +437,13 @@ plt
 
 **Respuesta:**
 
+La región de mayor probabilidad para $\mu$ se encuentra entre 1 y 3, mientras que para $\sigma$ la mayor densidad se concentra en el rango de 0.5 a 0.9. Esto sugiere que los datos observados tienden a estar centrados en valores bajos, con una variabilidad moderada. El prior utilizado para $\sigma$, basado en una distribución Beta(3, 8), favorece valores bajos, lo que se refleja en la forma adecuada del posterior respecto al punto de comparación en el eje de $\sigma$. Por el contrario, el prior uniforme para $\mu$ no parece haber sido el mejor, pues según el posterior, la media debería ser cercana al mínimo, cosa que no se corresponde con la media real, que oscila en torno al 6. De todas formas, sin ninguna información adicional, el prior uniforme seguía siendo buena opción, puesto que con algún otro modelo era posible quedar más lejos del valor real y empeorar aún más el resultado.
 
 
+- [ ] A continuación se presenta un código que permite realizar la distribución dada por sampling from grid approximation ¿Para que sirve este proceso? ¿Que puede deducir del gráfico?
 
-- [ ] A continuación se presenta un código que permite realizara la distribución dada por sampling from grid approximation ¿Para que sirve este proceso? ¿Que puede deducir del gráfico?
 
-
-```{r, eval=FALSE}
+```{r}
 
 # Codificamos los datos
 x <- 1:length(data_grid$posterior)
@@ -456,6 +463,11 @@ dens(df)
 
 **Respuesta:**
 
+El proceso de "sampling from grid approximation" permite obtener muestras representativas del posterior usando la aproximación discreta calculada previamente en la cuadrícula. El posterior combina la verosimilitud de los datos y el prior, pero al usar una aproximación por cuadrícula, se evalúa en puntos discretos. El muestreo transforma esta representación discreta en una muestra continua, proporcionando una visión más precisa de la distribución posterior de los parámetros, lo que permite convertir el posterior discreto en una distribución continua de muestras, lo que facilita el análisis.
+
+En los gráficos generados, se observa en el izquierdo la densidad de las muestras para $\mu$, que muestra un pico pronunciado alrededor de $\mu \approx 1.5$, lo que indica que los valores más probables para la media se encuentran en este rango. La distribución es asimétrica y decrece gradualmente a medida que $\mu$ aumenta, sugiriendo que aunque es posible encontrar medias mayores, estas son menos probables según los datos observados y el prior utilizado, en concordancia con el análisis previo.
+
+En el gráfico derecho, que muestra la densidad para $\sigma$, se observa un pico alrededor de $\sigma \approx 0.8$, lo que indica que estos son los valores más probables para la desviación estándar, acorde a la creencia dada. La distribución es aproximadamente simétrica, con una caída rápida después de 1 y un límite inferior en 0.5, reflejando la influencia del prior que restringe $\sigma$ al intervalo $([0.5, 1.5]$.
 
 ---
 
