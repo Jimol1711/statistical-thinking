@@ -111,7 +111,7 @@ install.packages('rethinking',type='source')
 Un conjunto de carteros aburridos de las mordidas de perros ha decidido realizar un catastro de mordidas recibidas por los empleados de su empresa en un periodo de 8 meses, planeando en base a estos datos realizar inferencia bayesiana. Los datos de las mordidas estas datos por el dataset `no+mordidas.csv`, en donde cada fila representa las mordidas recibidas por diferentes carteros y las columnas señalan si fue mordido o no el cartero en los meses de estudio (si fue mordido es señalado con un 1, de lo contrario es señalado con un 0). Cabe señalar que un cartero no puede ser mordido mas de una vez al mes, ya que el damnificado recibe licencia de todo un mes tras la mordida, reincorporándose el siguiente mes al trabajo.
 
 ```{r, eval=FALSE}
-dataMordidas <- read.csv("no+mordidas.csv", header = TRUE)
+dataMordidas <- read.csv("no_mordidas.csv", header = TRUE)
 ```
 
 - [] Uno de los carteros le comenta que, según él, lo han mordido 6 de cada 10 veces, y le recomienda usar esta información como antecedente para su inferencia. Para ello considere como prior la distribución gausseana de media 0.6 y desviación estándar 0.05. Programe el método grid approximation para 1, 2, 4 y 8 meses. ¿Como van cambiando las curvas posterior?
