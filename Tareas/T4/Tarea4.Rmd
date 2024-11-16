@@ -123,19 +123,23 @@ cols <- c("bites_month_1", "bites_month_2", "bites_month_3",
           "bites_month_7", "bites_month_8")
 
 grid_len <- 100
-p_grid <- 
-prior <- 
+p_grid <- seq(from = 0, to = 1, length.out = grid_len)
+prior <- dnorm(p_grid, mean = 0.6, sd = 0.05)
+
+prior <- prior / sum(prior)
 
 posteriors <- c()
 counted.months <- c()
 p_grids <- rep(p_grid, 4)
 
 for (n in c(1, 2, 4, 8)) {
-  x <- # total de mordidas
+  x <- rowSums(dataMordidas[, cols[1:n]])
   
-  likelihood <- 
-  unstd.posterior <- 
-  posterior <- 
+  total_bites <- sum(x)
+  
+  likelihood <- dbinom(total_bites, size = n * nrow(dataMordidas), prob = p_grid)
+  unstd.posterior <- likelihood * prior
+  posterior <- unstd.posterior / sum(unstd.posterior)
   
   posteriors <- c(posteriors, posterior)
   counted.months <- c(counted.months, rep(n, grid_len))
@@ -144,8 +148,12 @@ for (n in c(1, 2, 4, 8)) {
 post.df <- data.frame("grid"=p_grids, "posterior"=posteriors, "months"=counted.months)
 
 ggplot(post.df) +
-  geom_line(aes(x=grid, y=posterior)) +
-  facet_grid(months ~ .)
+  geom_line(aes(x = grid, y = posterior, color = as.factor(months))) +
+  facet_grid(months ~ .) +
+  labs(title = "Posterior Distribution Across Months",
+       x = "Probability of Bite (p_grid)", y = "Posterior Density") +
+  theme_minimal() +
+  scale_color_discrete(name = "Months")
 ```
 
 **Respuesta:**
