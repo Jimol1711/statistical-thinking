@@ -122,38 +122,34 @@ cols <- c("bites_month_1", "bites_month_2", "bites_month_3",
           "bites_month_4", "bites_month_5", "bites_month_6",
           "bites_month_7", "bites_month_8")
 
+# Prior parameters
 grid_len <- 100
-p_grid <- seq(from = 0, to = 1, length.out = grid_len)
-prior <- dnorm(p_grid, mean = 0.6, sd = 0.05)
-
-prior <- prior / sum(prior)
+p_grid <- seq(0, 1, length.out = grid_len)  # Grid of probabilities
+prior <- dnorm(p_grid, mean = 0.6, sd = 0.05) # Prior
 
 posteriors <- c()
 counted.months <- c()
 p_grids <- rep(p_grid, 4)
 
 for (n in c(1, 2, 4, 8)) {
-  x <- rowSums(dataMordidas[, cols[1:n]])
+  bites <- rowSums(as.matrix(dataMordidas[, 1:n]))
+
+  likelihood <- dbinom(bites, size = n, prob = p_grid)
   
-  total_bites <- sum(x)
-  
-  likelihood <- dbinom(total_bites, size = n * nrow(dataMordidas), prob = p_grid)
-  unstd.posterior <- likelihood * prior
+  unstd.posterior <- prior * likelihood
   posterior <- unstd.posterior / sum(unstd.posterior)
   
-  posteriors <- c(posteriors, posterior)
+  posteriors <- c(posteriors, rep(posterior,grid_len))
   counted.months <- c(counted.months, rep(n, grid_len))
 }
 
-post.df <- data.frame("grid"=p_grids, "posterior"=posteriors, "months"=counted.months)
+post.df <- data.frame("grid" = rep(p_grid, 4), "posterior" = posteriors, "months" = counted.months)
 
+# Graficar los resultados
 ggplot(post.df) +
-  geom_line(aes(x = grid, y = posterior, color = as.factor(months))) +
+  geom_line(aes(x = grid, y = posterior)) +
   facet_grid(months ~ .) +
-  labs(title = "Posterior Distribution Across Months",
-       x = "Probability of Bite (p_grid)", y = "Posterior Density") +
-  theme_minimal() +
-  scale_color_discrete(name = "Months")
+  labs(x = "Probabilidad de Mordida", y = "Posterior", title = "Distribución Posterior por Número de Meses")
 ```
 
 **Respuesta:**
@@ -164,25 +160,38 @@ ggplot(post.df) +
 
 
 ```{r, eval=FALSE}
-prior <- 
+cols <- c("bites_month_1", "bites_month_2", "bites_month_3",
+          "bites_month_4", "bites_month_5", "bites_month_6",
+          "bites_month_7", "bites_month_8")
+
+# Prior uniforme
+grid_len <- 100
+p_grid <- seq(0, 1, length.out = grid_len)  # Grid de probabilidades
+prior <- rep(1, grid_len)  # Prior uniforme
+
 posteriors <- c()
+counted.months <- c()
+p_grids <- rep(p_grid, 4)
 
 for (n in c(1, 2, 4, 8)) {
-  x <- 
+  bites <- rowSums(as.matrix(dataMordidas[, 1:n]))
+
+  likelihood <- dbinom(bites, size = n, prob = p_grid)
   
-  likelihood <- 
-  unstd.posterior <- 
-  posterior <- 
+  unstd.posterior <- prior * likelihood
+  posterior <- unstd.posterior / sum(unstd.posterior)
   
-  posteriors <- c(posteriors, posterior)
+  posteriors <- c(posteriors, rep(posterior, grid_len))
+  counted.months <- c(counted.months, rep(n, grid_len))
 }
 
-post.df$posterior2 <- posteriors
+post.df <- data.frame("grid" = rep(p_grid, 4), "posterior" = posteriors, "months" = counted.months)
 
+# Graficar los resultados
 ggplot(post.df) +
-  geom_line(aes(x=grid, y=posterior)) +
-  geom_line(aes(x=grid, y=posterior2), color="red") +
-  facet_grid(months ~ .)
+  geom_line(aes(x = grid, y = posterior)) +
+  facet_grid(months ~ .) +
+  labs(x = "Probabilidad de Mordida", y = "Posterior", title = "Distribución Posterior por Número de Meses")
 ```
 
 **Respuesta:**
@@ -194,15 +203,28 @@ ggplot(post.df) +
 
 ```{r, eval=FALSE}
 for (n in c(1, 2, 4, 8)) {
+  
+  # Definir la variable W como el número total de mordidas en los primeros n meses
+  W <- sum(dataMordidas[, cols[1:n]])
+  
+  # Calcular el número total de oportunidades (n*250 - mordidas)
+  L <- n * 250 - W
+  
+  # Ajustar el modelo usando el método de Laplace
   res <- quap(
     alist(
-      W ~ , # binomial likelihood
-      p ~  # uniform pior
+      W ~ dbinom(size = n * 250, prob = p),  # Likelihood binomial
+      p ~ dunif(0, 1)  # Prior uniforme para la probabilidad
     ),
-    data = list(W=sum(dataMordidas[, cols[1:n]]),L=n*250-sum(dataMordidas[, cols[1:n]])) )
+    data = list(W = W, L = L)
+  )
   
+  # Obtener el resumen de los resultados
   df <- precis(res)
-  curve(dnorm(x, df$mean, df$sd), lty=2, add=FALSE)
+  
+  # Graficar la distribución posterior usando una curva normal
+  curve(dnorm(x, df$mean, df$sd), lty=2, add=FALSE, main = paste("Distribución Posterior para", n, "meses"),
+        xlab = "Probabilidad de Mordida", ylab = "Densidad")
 }
 ```
 
