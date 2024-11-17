@@ -101,7 +101,7 @@ install.packages("rethinking")
 En caso de tener problemas al momento de instalar la librería con el código anterior, utilice el siguiente chunk:
 
 ```{r, eval=FALSE}
-install.packages(c("mvtnorm","loo","coda"), repos="https://cloud.r-project.org/",dependencies=TRUE)
+install.packages(c("mvtnorm","loo","coda", "shape"), repos="https://cloud.r-project.org/",dependencies=TRUE)
 options(repos=c(getOption('repos'), rethinking='http://xcelab.net/R'))
 install.packages('rethinking',type='source')
 ```
@@ -203,28 +203,32 @@ ggplot(post.df) +
 
 ```{r, eval=FALSE}
 for (n in c(1, 2, 4, 8)) {
-  
-  # Definir la variable W como el número total de mordidas en los primeros n meses
+  # Sumar las mordidas en los primeros n meses
   W <- sum(dataMordidas[, cols[1:n]])
   
-  # Calcular el número total de oportunidades (n*250 - mordidas)
+  # Calcular el número total de intentos
   L <- n * 250 - W
   
-  # Ajustar el modelo usando el método de Laplace
+  # Ajustar el modelo utilizando el método de Laplace
   res <- quap(
     alist(
       W ~ dbinom(size = n * 250, prob = p),  # Likelihood binomial
-      p ~ dunif(0, 1)  # Prior uniforme para la probabilidad
+      p ~ dunif(0, 1)                        # Prior uniforme para p
     ),
-    data = list(W = W, L = L)
+    data = list(W = W),  # Pasar los datos (W)
+    start = list(p = 0.3)  # Valor inicial explícito para p
   )
   
-  # Obtener el resumen de los resultados
+  # Obtener el resumen del modelo
   df <- precis(res)
   
-  # Graficar la distribución posterior usando una curva normal
-  curve(dnorm(x, df$mean, df$sd), lty=2, add=FALSE, main = paste("Distribución Posterior para", n, "meses"),
-        xlab = "Probabilidad de Mordida", ylab = "Densidad")
+  # Graficar la distribución posterior aproximada
+  curve(
+    dnorm(x, mean = df$mean, sd = df$sd),
+    from = 0, to = 1, lty = 2, add = FALSE,
+    main = paste("Distribución Posterior para", n, "meses"),
+    xlab = "Probabilidad de Mordida", ylab = "Densidad"
+  )
 }
 ```
 
@@ -518,10 +522,48 @@ poke.df <- read.csv("Pokemon.csv")
 
 **Respuesta:**
 
+Se utiliza un prior de media 100 y desviación estándar 50 para b0, basado en los valores observados en las variables y el conocimiento previo de los rangos en que suelen estar los ataques de los pokemones (entre 0 y 200, siempre positivos). Se asume también que la relación linear de la pendiente es no tan variable, es decir, con una pendiente 1 y variabilidad moderada de 0.5. Finalmente, se elige una desviación estándar conservadora, en el rango 0-200 mencionado anteriormente. Las ecuaciones del modelos son las del código que se encuentran en las alist model.
+
+Además, el código realiza el ajusta mediante la aproximación de Laplace con el método quap, entregando la lista con los parámetros y priors definidos.
 
 ```{r, eval=FALSE}
+# Model variables
+data <- pokemon[, c("Sp..Atk", "Attack")]
 
+# Bayesian model
+# Equations for the model
+model <- alist(
+  Sp..Atk ~ dnorm(mu, sigma),   # Likelihood
+  mu <- alpha + beta * Attack,  # Linear model
+  alpha ~ dnorm(100, 50),         # Intercept Prior
+  beta ~ dnorm(1, 0.5),          # Slope Prior
+  sigma ~ dunif(0, 200)              # Standard Deviation Prior
+)
+
+# Fit the model with Laplace Approximation
+fit <- quap(
+  model,
+  data = data
+)
+
+# Summary
+precis(fit)
+
+# Graph the model and uncertainty lines
+plot(data$Attack, data$Sp..Atk, pch = 16, col = "blue", xlab = "Attack", ylab = "Sp..Atk")
+post <- extract.samples(fit)
+for (i in 1:100) {
+  curve(post$alpha[i] + post$beta[i] * x, add = TRUE, col = alpha("red", 0.2))
+}
 ```
+Respecto a lo que nos da el comando precis:
+1. Podemos decir que el intercepto parece razonable considerando el rango entre 0 y 200. La media de 41.31 nos indica que cuando el ataque es 0, el ataque especial esperado es 41.31. Esto es razonable, ya que es esperable que el ataque especial sea mucho mayor que el normal. Además, el intervalo de credibilidad parece razonable para ese mismo valor.
+
+2. La pendiente parece mostrar un valor bajo entre 0.35 y 0.45. Esto nos indica que la relación entre attack y special attack es positiva, pero attack no es tan influyente en el valor de special attack y hay otras variables que influyen en esta última.
+
+3. Una alta media para la desviación estándar, lo que nos indica que quizá, el modelo no captura completamente la variación de los datos. Esto sugiere, al igual que con la pendiente, que hay otros factores o variables relevantes que afectan a special attack en los datos.
+
+Lo siguiente es el código que grafica el MAP de la regresión lineal con los intervalos del 95% que se tienen sobre la media y sobre el valor predecido de Sp..Atk. Los resultados son buenos, ya que el intervalo contiene a la mayoría de los valores y las líneas de incertidumbre. El modelo logra ser un buen predictor de los valores estudiados.
 
 ```{r, eval=FALSE}
 ggplot() +
@@ -529,6 +571,35 @@ ggplot() +
   geom_line(aes(x=, y=), color="orange") +
   geom_ribbon(aes(x=, y=, ymin=, ymax=), alpha=0.3, fill="orange") +
   geom_ribbon(aes(x=, y=, ymin=, ymax=), alpha=0.1, fill="orange")
+
+# Generate predictions on the fitted model
+attack_seq <- seq(min(data$Attack), max(data$Attack), length.out = 100)
+
+predicted_mean <- link(fit, data = list(Attack = attack_seq))
+
+mean_pred <- apply(predicted_mean, 2, mean)
+ci_mean <- apply(predicted_mean, 2, PI, prob = 0.95)
+
+predicted_values <- sim(fit, data = list(Attack = attack_seq))
+
+ci_pred <- apply(predicted_values, 2, PI, prob = 0.95)
+
+plot(data$Attack, data$Sp..Atk, pch = 16, col = "blue", xlab = "Attack", ylab = "Sp..Atk")
+
+# Graph lines and credible intervals
+lines(attack_seq, mean_pred, col = "red", lwd = 2)
+
+polygon(c(attack_seq, rev(attack_seq)),
+        c(ci_mean[1, ], rev(ci_mean[2, ])),
+        col = alpha("red", 0.2), border = NA)
+
+polygon(c(attack_seq, rev(attack_seq)),
+        c(ci_pred[1, ], rev(ci_pred[2, ])),
+        col = alpha("blue", 0.2), border = NA)
+
+legend("topleft", legend = c("Media predicha (MAP)", "IC 95% (media)", "IC 95% (valores)"),
+       col = c("red", alpha("red", 0.2), alpha("blue", 0.2)), lwd = c(2, NA, NA), pch = c(NA, 15, 15),
+       pt.cex = 2, bty = "n", cex = 0.8, bg = "white")
 ```
 
 
