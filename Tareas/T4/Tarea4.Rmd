@@ -116,7 +116,6 @@ dataMordidas <- read.csv("no_mordidas.csv", header = TRUE)
 
 - [] Uno de los carteros le comenta que, según él, lo han mordido 6 de cada 10 veces, y le recomienda usar esta información como antecedente para su inferencia. Para ello considere como prior la distribución gausseana de media 0.6 y desviación estándar 0.05. Programe el método grid approximation para 1, 2, 4 y 8 meses. ¿Como van cambiando las curvas posterior?
 
-
 ```{r, eval=FALSE}
 cols <- c("bites_month_1", "bites_month_2", "bites_month_3",
           "bites_month_4", "bites_month_5", "bites_month_6",
@@ -147,17 +146,16 @@ post.df <- data.frame("grid" = rep(p_grid, 4), "posterior" = posteriors, "months
 
 # Graficar los resultados
 ggplot(post.df) +
-  geom_line(aes(x = grid, y = posterior)) +
+  geom_line(aes(x = grid, y = posteriors)) +
   facet_grid(months ~ .) +
   labs(x = "Probabilidad de Mordida", y = "Posterior", title = "Distribución Posterior por Número de Meses")
 ```
 
 **Respuesta:**
 
-
+Es difícil de interpretar por la forma en que esta graficado. Sin embargo, sí notamos que las menores probabilidades de perdida muestran un comportamiento más errático con el avance de los meses. Esto nos indica que a medida que avanzan los meses, la probabilidad de mordidad es menor, dado que el posterior genera cambios en su distribución respecto a estas menores probabilidades.
 
 - [] Vuelva a aplicar grid approximation como el parte anterior, pero esta vez con prior uniforme y compare los resultados. ¿Qué puede decir sobre la elección de los priors?
-
 
 ```{r, eval=FALSE}
 cols <- c("bites_month_1", "bites_month_2", "bites_month_3",
@@ -189,53 +187,44 @@ post.df <- data.frame("grid" = rep(p_grid, 4), "posterior" = posteriors, "months
 
 # Graficar los resultados
 ggplot(post.df) +
-  geom_line(aes(x = grid, y = posterior)) +
+  geom_line(aes(x = grid, y = posteriors)) +
   facet_grid(months ~ .) +
   labs(x = "Probabilidad de Mordida", y = "Posterior", title = "Distribución Posterior por Número de Meses")
 ```
 
 **Respuesta:**
 
-
+Vemos que el comportamiento anterior no se ve reflejado del todo. Aquí, la distribución del posterior parece mantenerse con el avance de los meses. Esto podría indicar que es importante la elección del prior, ya que, en este caso al menos, la elección de este cambia los resultados del análisis Bayesiano.
 
 - [] Repita el mismo analisis anterior pero utilizando el metodo de Laplace (no necesita programar el metodo, puede utilizar la libreria "rethinking"). ¿Cómo se comparan con los resultados anteriores?
 
-
 ```{r, eval=FALSE}
 for (n in c(1, 2, 4, 8)) {
-  # Sumar las mordidas en los primeros n meses
-  W <- sum(dataMordidas[, cols[1:n]])
   
-  # Calcular el número total de intentos
+  W <- sum(dataMordidas[, 1:n])
   L <- n * 250 - W
   
-  # Ajustar el modelo utilizando el método de Laplace
+  # Adjust model
   res <- quap(
     alist(
-      W ~ dbinom(size = n * 250, prob = p),  # Likelihood binomial
-      p ~ dunif(0, 1)                        # Prior uniforme para p
+      W ~ dbinom(L, p),  # Likelihood
+      p ~ dunif(0, 1)    # Prior 
     ),
-    data = list(W = W),  # Pasar los datos (W)
-    start = list(p = 0.3)  # Valor inicial explícito para p
+    data = list(W = W, L = L)
   )
   
-  # Obtener el resumen del modelo
   df <- precis(res)
   
-  # Graficar la distribución posterior aproximada
-  curve(
-    dnorm(x, mean = df$mean, sd = df$sd),
-    from = 0, to = 1, lty = 2, add = FALSE,
-    main = paste("Distribución Posterior para", n, "meses"),
-    xlab = "Probabilidad de Mordida", ylab = "Densidad"
-  )
+  # Graph the posterior curves
+  curve(dnorm(x, df$mean, df$sd), lty=2, add=FALSE, 
+        xlab = "Probabilidad de mordida", ylab = "Densidad",
+        main = paste("Distribución posterior - Meses:", n))
 }
 ```
 
 **Respuesta:**
 
-
-
+Los resultados son más interpretables, ya que se observan directamente las densidades de las probabilidades. En este caso, Vemos que efectivamente suben las probabilidades respecto a su valor inicial (0) pero además tenemos un rango más cercano en el que estimar el cual es entre 0.6 y 0.7, dado que la distribución del posterior parece ser una gaussiana en ese rango.
 
 - [] Grafique la densidad de la posterior y encuentre la proporción de los siguientes defined boundaries:
 
@@ -243,102 +232,126 @@ for (n in c(1, 2, 4, 8)) {
 - [ ] $(0.35, 0.45)$
 - [ ] $(0.45, 1)$
 
-¿Cómo puede interpretar los resultados? 
+¿Cómo puede interpretar los resultados?
 
 ```{r, eval=FALSE}
 grid_len <- 1000
-p_grid <- 
+p_grid <- seq(0, 1, length.out = grid_len)
 
-prior <- 
+prior <- dnorm(p_grid, mean = 0.6, sd = 0.05)
 
-likelihood <- 
+bites <- rowSums(as.matrix(dataMordidas[, 1:8]))
 
-unstd.posterior <- 
+likelihood <- dbinom(bites, size = 8, prob = p_grid)
 
-posterior <- 
+unstd.posterior <- prior * likelihood
 
-samples <- sample(p_grid, prob=posterior, size=1e4, replace=TRUE)
+posterior <- unstd.posterior / sum(unstd.posterior)
+
+samples <- sample(p_grid, prob = posterior, size = 1e4, replace = TRUE)
 
 dens(samples)
+
+# Intervalos:
+proporcion_0_035 <- mean(samples >= 0 & samples <= 0.35)
+proporcion_035_045 <- mean(samples > 0.35 & samples <= 0.45)
+proporcion_mayor_045 <- mean(samples > 0.45)
+
+# Print proportions
+cat("Proporción en el rango [0, 0.35]:", proporcion_0_035, "\n")
+cat("Proporción en el rango (0.35, 0.45]:", proporcion_035_045, "\n")
+cat("Proporción en el rango (>0.45):", proporcion_mayor_045, "\n")
 ```
 
-Intervalos:
-
-
-```{r, eval=FALSE}
-# fracción de valores <0.35
-```
-
-```{r, eval=FALSE}
-# fracción de valores entre 0.35 y 0.45
-```
-
-```{r, eval=FALSE}
-# fracción de valores >0.45
-```
 
 **Respuesta:**
 
-
+Los resultados parecen indicar una proporción mayor para la posterior cercana a 0.6. La proporción de los defined boundaries indica que la mayor parte de estas posteriores están en el rango mayor a 0.45. Esto nos indica que la probabilidad de mordida es mayor a este valor y es cercana a 0.6.
 
 
 -[] Calcule un intervalo de credibilidad al $50%$, $75%$ y $95%$. ¿Como se puede interpretar los resultados? ¿Cual podría ser un problema al usar intervalos de credibilidad? 
 
+```{r, eval=FALSE}
+# Function to calculate credible interval for given prob
+cred_interval <- function(samples, prob) {
+  quantiles <- quantile(samples, probs = c((1 - prob) / 2, 1 - (1 - prob) / 2))
+  return(quantiles)
+}
+
+# Calculate intervals
+cred_50 <- cred_interval(samples, 0.50)
+cred_75 <- cred_interval(samples, 0.75)
+cred_95 <- cred_interval(samples, 0.95)
+```
 
 Intervalo $50\%$:
 ```{r, eval=FALSE}
-
+cat("Intervalo de Credibilidad 50%: [", cred_50[1], ", ", cred_50[2], "]\n")
 ```
 
 Intervalo $75\%$
 ```{r, eval=FALSE}
-
+cat("Intervalo de Credibilidad 75%: [", cred_75[1], ", ", cred_75[2], "]\n")
 ```
 
 Intervalo $95\%$
 ```{r, eval=FALSE}
-
+cat("Intervalo de Credibilidad 95%: [", cred_95[1], ", ", cred_95[2], "]\n")
 ```
 
 **Respuesta:**
 
-
+Los resultados nos indican que podemos decir con importante certeza que la probabilidad se encuentra al menos en el rango entre 0.4 y 0.6. Un problema que pueden tener los intervalos de credibilidad es que estos dependen fuertemente de la elección del modelo, de los datos y de la elección del prior. En este caso, yo creo que los intervalos de credibilidad se están viendo afectados por la elección del prior, ya que este es centrado en 0.6. Claramente los intervalos tienden a incluir este valor.
 
 
 - [ ] Genere los intervalos HDPI para $50%$, $75%$ y $95%$, compárelos con  los intervalos de credibilidad de la parte anterior. ¿En que se diferencian los intervalos de credibilidad con los HDPI? 
 
+```{r}
+# Calculate intervals with HPDI function from rethinking
+hdpi_50 <- HPDI(samples, prob = 0.50)
+hdpi_75 <- HPDI(samples, prob = 0.75)
+hdpi_95 <- HPDI(samples, prob = 0.95)
+```
 
 Intervalo $50\%$:
 ```{r}
-
+cat("Intervalo HDPI 50%: [", hdpi_50[1], ", ", hdpi_50[2], "]\n")
 ```
 
 
 Intervalo $75\%$
 
 ```{r}
-
+cat("Intervalo HDPI 75%: [", hdpi_75[1], ", ", hdpi_75[2], "]\n")
 ```
 
 Intervalo $95\%$
 
 ```{r}
-
+cat("Intervalo HDPI 95%: [", hdpi_95[1], ", ", hdpi_95[2], "]\n")
 ```
 
 **Respuesta:**
 
-
+Los intervalos son un poco más estrechos, pero sigue sin ser una diferencia demasiado sustantiva.
 
 - [ ] Utilizando la posterior obtenida en la parte anterior, simule 10.000 réplicas de registros de mordidas. Compare la distribución del ratio de carteros mordidos predichos a partir de las réplicas con el ratio real de los datos. ¿El modelo se ajusta bien a los datos? Es decir, ¿la distribución de las predicciones incluye la observación real como resultado central y probable?
 
 ```{r, eval=FALSE}
-ratio.real <- 
-samples <- 
+bites <- rowSums(as.matrix(dataMordidas[, 1:8]))
+n <- nrow(dataMordidas)
+ratio.real <- sum(bites) / (n * 8)
+
+simulated_bites <- sapply(samples, function(p) {
+  rbinom(n, size = 8, prob = p)
+})
+
+simulated_ratios <- rowSums(simulated_bites) / (n * 8)
 
 ggplot() +
-  geom_density(aes(samples)) +
-  geom_vline(aes(xintercept=ratio.real), color="red")
+  geom_density(aes(simulated_ratios)) + 
+  geom_vline(aes(xintercept = ratio.real), color = "red") +
+  labs(x = "Ratio de Carteros Mordidos", y = "Densidad", title = "Distribución de Ratios Simulados vs. Ratio Real")
 ```
 
 
@@ -346,7 +359,7 @@ ggplot() +
 
 
 
-- [ ] Escoja cualquier par de meses concecutivos y obtenga la posterior de que una persona que fue mordida en el primer mes, sea mordida nuevamente en el segundo mes. Para esto, se recomienda comenzar buscando los carteros que fueron mordidos el primer mes y en base a estos generar una búsqueda indexada para obtener el número solicitado. Hecho esto simule ese número carteros mordidos 10.000 veces. De los resultados obtenidos, compare el recuento de carteros mordidos con el recuento real. ¿Cómo se ve el modelo desde este punto de vista?
+- [ ] Escoja cualquier par de meses consecutivos y obtenga la posterior de que una persona que fue mordida en el primer mes, sea mordida nuevamente en el segundo mes. Para esto, se recomienda comenzar buscando los carteros que fueron mordidos el primer mes y en base a estos generar una búsqueda indexada para obtener el número solicitado. Hecho esto simule ese número carteros mordidos 10.000 veces. De los resultados obtenidos, compare el recuento de carteros mordidos con el recuento real. ¿Cómo se ve el modelo desde este punto de vista?
 
 ```{r, eval=FALSE}
 
