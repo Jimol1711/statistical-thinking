@@ -73,7 +73,7 @@ En la siguiente sección deberá resolver cada uno de los experimentos computaci
 
 Para el desarrollo preste mucha atención en los enunciados, ya que se le solicitará la implementación de métodos sin uso de funciones predefinidas. Por otro lado, Las librerías permitidas para desarrollar de la tarea 4 son las siguientes:
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 # Manipulación de estructuras
 library(tidyverse)
 library(dplyr)
@@ -94,13 +94,13 @@ library(rethinking)
 
 Si no tiene instalada la librería “rethinking”, ejecute las siguientes líneas de código para instalar la librería:
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 install.packages("rethinking")
 ```
 
 En caso de tener problemas al momento de instalar la librería con el código anterior, utilice el siguiente chunk:
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 install.packages(c("mvtnorm","loo","coda", "shape"), repos="https://cloud.r-project.org/",dependencies=TRUE)
 options(repos=c(getOption('repos'), rethinking='http://xcelab.net/R'))
 install.packages('rethinking',type='source')
@@ -110,21 +110,21 @@ install.packages('rethinking',type='source')
 
 Un conjunto de carteros aburridos de las mordidas de perros ha decidido realizar un catastro de mordidas recibidas por los empleados de su empresa en un periodo de 8 meses, planeando en base a estos datos realizar inferencia bayesiana. Los datos de las mordidas estas datos por el dataset `no+mordidas.csv`, en donde cada fila representa las mordidas recibidas por diferentes carteros y las columnas señalan si fue mordido o no el cartero en los meses de estudio (si fue mordido es señalado con un 1, de lo contrario es señalado con un 0). Cabe señalar que un cartero no puede ser mordido mas de una vez al mes, ya que el damnificado recibe licencia de todo un mes tras la mordida, reincorporándose el siguiente mes al trabajo.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 dataMordidas <- read.csv("no_mordidas.csv", header = TRUE)
 ```
 
 - [] Uno de los carteros le comenta que, según él, lo han mordido 6 de cada 10 veces, y le recomienda usar esta información como antecedente para su inferencia. Para ello considere como prior la distribución gausseana de media 0.6 y desviación estándar 0.05. Programe el método grid approximation para 1, 2, 4 y 8 meses. ¿Como van cambiando las curvas posterior?
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 cols <- c("bites_month_1", "bites_month_2", "bites_month_3",
           "bites_month_4", "bites_month_5", "bites_month_6",
           "bites_month_7", "bites_month_8")
 
 # Prior parameters
-grid_len <- 100
-p_grid <- seq(0, 1, length.out = grid_len)  # Grid of probabilities
-prior <- dnorm(p_grid, mean = 0.6, sd = 0.05) # Prior
+grid_len <- 250
+p_grid <- seq(from=0, to=1, length.out = grid_len)
+prior <- dnorm(p_grid, mean = 0.6, sd = 0.05)
 
 posteriors <- c()
 counted.months <- c()
@@ -138,13 +138,13 @@ for (n in c(1, 2, 4, 8)) {
   unstd.posterior <- prior * likelihood
   posterior <- unstd.posterior / sum(unstd.posterior)
   
-  posteriors <- c(posteriors, rep(posterior,grid_len))
+  posteriors <- c(posteriors, posterior)
   counted.months <- c(counted.months, rep(n, grid_len))
 }
 
-post.df <- data.frame("grid" = rep(p_grid, 4), "posterior" = posteriors, "months" = counted.months)
+post.df <- data.frame("grid" = p_grids, "posterior" = posteriors, "months" = counted.months)
 
-# Graficar los resultados
+# Visualize
 ggplot(post.df) +
   geom_line(aes(x = grid, y = posteriors)) +
   facet_grid(months ~ .) +
@@ -153,19 +153,19 @@ ggplot(post.df) +
 
 **Respuesta:**
 
-Es difícil de interpretar por la forma en que esta graficado. Sin embargo, sí notamos que las menores probabilidades de perdida muestran un comportamiento más errático con el avance de los meses. Esto nos indica que a medida que avanzan los meses, la probabilidad de mordidad es menor, dado que el posterior genera cambios en su distribución respecto a estas menores probabilidades.
+Es difícil de interpretar por como está graficado. Sin embargo, podemos ver que el comportamiento del posterior a medida que avanzan los meses se ve fuertemente influenciado por el prior. Vemos que muestra un comportamiento variable con una deviación cercana a la dada por el carteror (0.05) y asociado a una probabilidad de mordida del 0.6.
 
 - [] Vuelva a aplicar grid approximation como el parte anterior, pero esta vez con prior uniforme y compare los resultados. ¿Qué puede decir sobre la elección de los priors?
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 cols <- c("bites_month_1", "bites_month_2", "bites_month_3",
           "bites_month_4", "bites_month_5", "bites_month_6",
           "bites_month_7", "bites_month_8")
 
 # Prior uniforme
-grid_len <- 100
-p_grid <- seq(0, 1, length.out = grid_len)  # Grid de probabilidades
-prior <- rep(1, grid_len)  # Prior uniforme
+grid_len <- 250
+p_grid <- seq(from=0, to=1, length.out = grid_len)
+prior <- rep(1, grid_len)
 
 posteriors <- c()
 counted.months <- c()
@@ -179,11 +179,10 @@ for (n in c(1, 2, 4, 8)) {
   unstd.posterior <- prior * likelihood
   posterior <- unstd.posterior / sum(unstd.posterior)
   
-  posteriors <- c(posteriors, rep(posterior, grid_len))
-  counted.months <- c(counted.months, rep(n, grid_len))
+  posteriors <- c(posteriors, posterior)
 }
 
-post.df <- data.frame("grid" = rep(p_grid, 4), "posterior" = posteriors, "months" = counted.months)
+post.df$posterior2 <- posteriors
 
 # Graficar los resultados
 ggplot(post.df) +
@@ -198,7 +197,7 @@ Vemos que el comportamiento anterior no se ve reflejado del todo. Aquí, la dist
 
 - [] Repita el mismo analisis anterior pero utilizando el metodo de Laplace (no necesita programar el metodo, puede utilizar la libreria "rethinking"). ¿Cómo se comparan con los resultados anteriores?
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 for (n in c(1, 2, 4, 8)) {
   
   W <- sum(dataMordidas[, 1:n])
@@ -224,7 +223,7 @@ for (n in c(1, 2, 4, 8)) {
 
 **Respuesta:**
 
-Los resultados son más interpretables, ya que se observan directamente las densidades de las probabilidades. En este caso, Vemos que efectivamente suben las probabilidades respecto a su valor inicial (0) pero además tenemos un rango más cercano en el que estimar el cual es entre 0.6 y 0.7, dado que la distribución del posterior parece ser una gaussiana en ese rango.
+Los resultados son más interpretables, ya que se observan directamente las densidades de las probabilidades. En este caso, Vemos que efectivamente suben las probabilidades respecto a su valor inicial (0) pero además tenemos un rango más cercano en el que estimar el cual es entre 0.6 y 0.7, dado que la distribución del posterior parece ser una gaussiana en ese rango. Vemos además que con el avance de los meses, el centro de la distribución se va a acercando a 0.6, que corresponde al centro del prior.
 
 - [] Grafique la densidad de la posterior y encuentre la proporción de los siguientes defined boundaries:
 
@@ -234,7 +233,7 @@ Los resultados son más interpretables, ya que se observan directamente las dens
 
 ¿Cómo puede interpretar los resultados?
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 grid_len <- 1000
 p_grid <- seq(0, 1, length.out = grid_len)
 
@@ -268,10 +267,9 @@ cat("Proporción en el rango (>0.45):", proporcion_mayor_045, "\n")
 
 Los resultados parecen indicar una proporción mayor para la posterior cercana a 0.6. La proporción de los defined boundaries indica que la mayor parte de estas posteriores están en el rango mayor a 0.45. Esto nos indica que la probabilidad de mordida es mayor a este valor y es cercana a 0.6.
 
-
 -[] Calcule un intervalo de credibilidad al $50%$, $75%$ y $95%$. ¿Como se puede interpretar los resultados? ¿Cual podría ser un problema al usar intervalos de credibilidad? 
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 # Function to calculate credible interval for given prob
 cred_interval <- function(samples, prob) {
   quantiles <- quantile(samples, probs = c((1 - prob) / 2, 1 - (1 - prob) / 2))
@@ -285,28 +283,28 @@ cred_95 <- cred_interval(samples, 0.95)
 ```
 
 Intervalo $50\%$:
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 cat("Intervalo de Credibilidad 50%: [", cred_50[1], ", ", cred_50[2], "]\n")
 ```
 
 Intervalo $75\%$
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 cat("Intervalo de Credibilidad 75%: [", cred_75[1], ", ", cred_75[2], "]\n")
 ```
 
 Intervalo $95\%$
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 cat("Intervalo de Credibilidad 95%: [", cred_95[1], ", ", cred_95[2], "]\n")
 ```
 
 **Respuesta:**
 
-Los resultados nos indican que podemos decir con importante certeza que la probabilidad se encuentra al menos en el rango entre 0.4 y 0.6. Un problema que pueden tener los intervalos de credibilidad es que estos dependen fuertemente de la elección del modelo, de los datos y de la elección del prior. En este caso, yo creo que los intervalos de credibilidad se están viendo afectados por la elección del prior, ya que este es centrado en 0.6. Claramente los intervalos tienden a incluir este valor.
+Los resultados nos indican con importante certeza que la probabilidad se encuentra al menos en el rango entre 0.4 y 0.6. Un problema que pueden tener los intervalos de credibilidad es que estos dependen fuertemente de la elección del modelo, de los datos y de la elección del prior. En este caso, los intervalos de credibilidad se están viendo afectados por la elección del prior, ya que este es centrado en 0.6. Claramente los intervalos tienden a incluir este valor.
 
 
 - [ ] Genere los intervalos HDPI para $50%$, $75%$ y $95%$, compárelos con  los intervalos de credibilidad de la parte anterior. ¿En que se diferencian los intervalos de credibilidad con los HDPI? 
 
-```{r}
+```{r, eval=TRUE}
 # Calculate intervals with HPDI function from rethinking
 hdpi_50 <- HPDI(samples, prob = 0.50)
 hdpi_75 <- HPDI(samples, prob = 0.75)
@@ -314,30 +312,30 @@ hdpi_95 <- HPDI(samples, prob = 0.95)
 ```
 
 Intervalo $50\%$:
-```{r}
+```{r, eval=TRUE}
 cat("Intervalo HDPI 50%: [", hdpi_50[1], ", ", hdpi_50[2], "]\n")
 ```
 
 
 Intervalo $75\%$
 
-```{r}
+```{r, eval=TRUE}
 cat("Intervalo HDPI 75%: [", hdpi_75[1], ", ", hdpi_75[2], "]\n")
 ```
 
 Intervalo $95\%$
 
-```{r}
+```{r, eval=TRUE}
 cat("Intervalo HDPI 95%: [", hdpi_95[1], ", ", hdpi_95[2], "]\n")
 ```
 
 **Respuesta:**
 
-Los intervalos son un poco más estrechos, pero sigue sin ser una diferencia demasiado sustantiva.
+Los intervalos son un poco más estrechos, pero sigue sin ser una diferencia demasiado sustantiva. La diferencia entre los intervalos es que los HDPI no asignan igual densidad de probabilidad en las colas.
 
 - [ ] Utilizando la posterior obtenida en la parte anterior, simule 10.000 réplicas de registros de mordidas. Compare la distribución del ratio de carteros mordidos predichos a partir de las réplicas con el ratio real de los datos. ¿El modelo se ajusta bien a los datos? Es decir, ¿la distribución de las predicciones incluye la observación real como resultado central y probable?
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 bites <- rowSums(as.matrix(dataMordidas[, 1:8]))
 n <- nrow(dataMordidas)
 ratio.real <- sum(bites) / (n * 8)
@@ -346,7 +344,7 @@ simulated_bites <- sapply(samples, function(p) {
   rbinom(n, size = 8, prob = p)
 })
 
-simulated_ratios <- rowSums(simulated_bites) / (n * 8)
+simulated_ratios <- colSums(simulated_bites) / (n * 8)
 
 ggplot() +
   geom_density(aes(simulated_ratios)) + 
@@ -357,18 +355,38 @@ ggplot() +
 
 **Respuesta:**
 
-
+Aparentemente, no, el modelo no se ajusta bien a los datos. El ratio real parece estar un poco bajo 0.4 mientras que la distribución de las predicciones está centrada en 0.6 (Que se asocia más al prior).
 
 - [ ] Escoja cualquier par de meses consecutivos y obtenga la posterior de que una persona que fue mordida en el primer mes, sea mordida nuevamente en el segundo mes. Para esto, se recomienda comenzar buscando los carteros que fueron mordidos el primer mes y en base a estos generar una búsqueda indexada para obtener el número solicitado. Hecho esto simule ese número carteros mordidos 10.000 veces. De los resultados obtenidos, compare el recuento de carteros mordidos con el recuento real. ¿Cómo se ve el modelo desde este punto de vista?
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
+first_month <- "bites_month_7"
+second_month <- "bites_month_8"
 
+# Filter bitten on first month
+mordidos_first <- dataMordidas[dataMordidas[[first_month]] == 1, ]
 
+real_recuento <- sum(mordidos_first[[second_month]])
+
+n_mordidos_first <- nrow(mordidos_first)
+
+# Simulate 10000 times
+simulated_counts <- sapply(samples, function(p) {
+  rbinom(1, size = n_mordidos_first, prob = p)
+})
+
+ggplot() +
+  geom_density(aes(simulated_counts), alpha = 0.5) +
+  geom_vline(aes(xintercept = real_recuento), color = "red", linetype = "dashed") +
+  labs(x = "Recuento de Carteros Mordidos", 
+       y = "Densidad",
+       title = "Distribución de Simulaciones vs. Recuento Real") +
+  theme_minimal()
 ```
 
 **Respuesta:**
 
-
+Ocurre un fenómeno similar al anterior, donde el modelo no se ajustaba bien y centraba la distribución en el prior. Esto probablemente se debe a un error en los cálculos. Es interesante ver sin embargo como el modelo llega a distribuciones similares.
 
 ---
 
@@ -382,7 +400,7 @@ Usted sabe un dato extra sobre la información, $\sigma \in [0.5,1.5]$ y, ademá
 - [ ] Modifique el siguiente codigo que permite realizar una grid approximation para $2$ parámetros. Proponga priors para $\mu$ y $\sigma$, justifique su elección.
 
 
-```{r}
+```{r, eval=TRUE}
 # Leer información
 data_notas <- read.csv("notas.csv")
 data_vector <- as.numeric(data_notas$Notas)
@@ -435,7 +453,7 @@ Para el parámetro $\mu$, que representa la media de las notas, se ha selecciona
 
 Para el parámetro $\sigma$, correspondiente a la desviación estándar, se ha optado por un prior de distribución beta. La elección se fundamenta en la información adicional proporcionada, que indica que $\sigma$ se encuentra en el intervalo $([0.5, 1.5])$ y es más probable que tome valores entre $([0.5, 1])$ que en $((1, 1.5])$. Para representar esto, se ha optado los parámetros $\alpha = 3$ y $\beta = 8$ para aumentar la probabilidad dentro del rango $([0.5, 1])$. Graficamente:
 
-```{r}
+```{r, eval=TRUE}
 plot(grid_sigma, prior_sigma, type = "l", col = "blue",
      main = "Prior para sigma usando Beta(3, 8)",
      xlab = expression(sigma), ylab = "Densidad de probabilidad")
@@ -447,7 +465,7 @@ abline(h = 0, col = "gray")
 - [ ] Tras haber ejecutado el código de la parte anterior ejecute el siguiente, ¿Que puede decir de los valores de la distribución? Se recomienda hacer modificaciones en el código para realizar un mejor análisis y estudio.
 
 
-```{r}
+```{r, eval=TRUE}
 
 # Punto de referencia
 valor_x <- mean(data_vector)
@@ -490,7 +508,7 @@ La región de mayor probabilidad para $\mu$ se encuentra entre 1 y 3, mientras q
 - [ ] A continuación se presenta un código que permite realizar la distribución dada por sampling from grid approximation ¿Para que sirve este proceso? ¿Que puede deducir del gráfico?
 
 
-```{r}
+```{r, eval=TRUE}
 
 # Codificamos los datos
 x <- 1:length(data_grid$posterior)
@@ -524,7 +542,7 @@ El objetivo de esta pregunta es introducirlo en la aplicación de una regresión
 
 Para esta pregunta usaremos el dataset `Pokemon.csv`, que contiene las características de más de 700 personajes.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 poke.df <- read.csv("Pokemon.csv")
 ```
 
@@ -539,9 +557,9 @@ Se utiliza un prior de media 100 y desviación estándar 50 para b0, basado en l
 
 Además, el código realiza el ajusta mediante la aproximación de Laplace con el método quap, entregando la lista con los parámetros y priors definidos.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 # Model variables
-data <- pokemon[, c("Sp..Atk", "Attack")]
+data <- poke.df[, c("Sp..Atk", "Attack")]
 
 # Bayesian model
 # Equations for the model
@@ -578,7 +596,7 @@ Respecto a lo que nos da el comando precis:
 
 Lo siguiente es el código que grafica el MAP de la regresión lineal con los intervalos del 95% que se tienen sobre la media y sobre el valor predecido de Sp..Atk. Los resultados son buenos, ya que el intervalo contiene a la mayoría de los valores y las líneas de incertidumbre. El modelo logra ser un buen predictor de los valores estudiados.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 ggplot() +
   geom_point(aes(x=poke.df$Attack, y=poke.df$Sp..Atk), color="red") +
   geom_line(aes(x=, y=), color="orange") +
