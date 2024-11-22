@@ -237,7 +237,7 @@ Los resultados son más interpretables, ya que se observan directamente las dens
 grid_len <- 1000
 p_grid <- seq(0, 1, length.out = grid_len)
 
-prior <- dnorm(p_grid, mean = 0.6, sd = 0.05)
+prior <- rep(1, grid_len) # dnorm(p_grid, mean = 0.6, sd = 0.05)
 
 bites <- rowSums(as.matrix(dataMordidas[, 1:8]))
 
@@ -315,7 +315,6 @@ Intervalo $50\%$:
 ```{r, eval=TRUE}
 cat("Intervalo HDPI 50%: [", hdpi_50[1], ", ", hdpi_50[2], "]\n")
 ```
-
 
 Intervalo $75\%$
 
