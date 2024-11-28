@@ -73,6 +73,11 @@ Explique cómo cross-validation, criterios de información y regularización ayu
 
 > Respuesta
 
+En el caso de cross-validation, lo hace mediante testear en pequeños subsets de la data e ir testeando con cada uno y entrenando con lo demás. Básicamente, es un proceso iterativo que testea en todos los datos de a poco, lo que permite al modelo no memorizar la data de entrenamiento ya que esta cambia en cada iteración.
+
+Regularización evita el overfitting y underfitting mediante ajusta un valor lambda el cual se usa en la función likelihood, el cual penaliza para parámetros con valores grandes. Esto genera que los priors sean más escépticos según como se ajuste el parámetro (Si es menor, se evita underfitting, si es mayor, se evita overfitting).
+
+Los criterios de información, en particular AIC, utilia el número de parámetros para penalizar a los modelos que tienen muchos parámetros (overfitting) o compensar para modelos que se ajustan mejor a los datos (underfitting). Esto lo hace mediante estimar su valor como la suma entre la likelihood y el doble del número de parámetros (lo cual permite el ajuste). Este valor equivale a una estimación de la out-of-sample deviance promedio.
 
 ### Pregunta 2: Directed Graphical Models	
 
