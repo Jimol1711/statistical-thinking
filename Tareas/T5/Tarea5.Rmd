@@ -85,7 +85,78 @@ Diseñe una DAG para un problema causal inventado por usted de al menos 5 nodos 
 
 > Respuesta
 
+```{r, eval=TRUE}
+install.packages("dagitty", repos = "https://cloud.r-project.org/")
+```
 
+Usaremos un ejemplo en un contexto médico. Una enfermedad puede producir fiebre o dolores de cabeza. Si el paciente está deshidratado, puede ser por fiebre o por náuseas. Esto junto con las independencias condicionales se visualiza en el siguiente código que utiliza dagitty:
+
+```{r, eval=TRUE}
+library(dagitty)
+
+# s := sickness, f := fever, h := headache, d := dehydration, n := nausea
+over <- dagitty("dag{ s -> f; s -> h; f -> d; n -> d }")
+
+coordinates(over) <- list(x = c(s = 2, f = 3, h = 1, d = 2, n = 2),
+                          y = c(s = 4, f = 3, h = 3, d = 2, n = 1))
+
+plot(over)
+
+cat("Las independencias condicionales son:\n")
+impliedConditionalIndependencies(over)
+```
+Luego explicamos cada independencias condicional.
+
+1. d _||_ h | s
+
+Esta independencia nos indica que la deshidratación es independiente del dolor de cabeza, dado que conocemos que se tiene la enfermedad. El dolor de cabeza no influye en la deshidratación por lo que está independencia es evidente y por regla de d-separación debería estar d-separados condicionado por s, ya que s está en un fork en el camino entre d y h y es parte de la evidencia:
+
+```{r, eval=TRUE}
+dseparated(over, "d", "h", c("s"))
+```
+
+Lo mismo pasa con la siguiente, en este caso respecto a la fiebre f, y f aquí es parte de una cadena:
+
+2. d _||_ h | f
+
+```{r, eval=TRUE}
+dseparated(over, "d", "h", c("f"))
+```
+La siguiente nos muestra que la deshidratación es independiente de la enfermedad dado la fiebre. Si sabemos que tiene fiebre, entonces la enfermedad no impacta en la probabilidad de deshidratación. Esto significa que deberían estar d-separados.
+
+3. d _||_ s | f
+
+```{r, eval=TRUE}
+dseparated(over, "d", "s", c("f"))
+```
+La siguiente nos dice que la fiebre es independiente del dolor de cabeza dado que existe la enfermedad. Esto se explica ya que la fiebre y el dolor de cabeza son independientes si se sabe que se tiene la enfermedad. Si no, se podría saber que se tiene fiebre, lo cual podría significar que se tiene la enfermedad y esto abre a la posibilidad de que se tenga dolor de cabeza (Por ende no son independientes si no se sabe que se tiene la enfermedad). La enfermedad es un fork entre ellos dos, pero es parte de la evidencia, por lo que deberían estar d-separados:
+
+4. f _||_ h | s
+
+```{r, eval=TRUE}
+dseparated(over, "f", "h", c("s"))
+```
+Esta independencia nos dice que la fiebre es independiente de las nauseas. Esto tiene sentido ya que las nauseas solo causan deshidratación, pero esta última no esta involucrada en la relación entre la fiebre y las nauseas. Esto último nos indica que d no es parte de la evidencia y es un collider, por lo que deben estar d-separadas:
+
+5. f _||_ n
+
+```{r, eval=TRUE}
+dseparated(over, "f", "n", c())
+```
+La siguiente nos indica que el dolor de cabeza es independiente de las nauseas. No existe relación causal entre las nauses y el dolor de cabeza, por lo que esta independencia es clara. Entre estos nodos hay tanto un collider, un fork y una cadena. El collider d no esta en la evidencia, y los otros dos tampoco, por lo que deben estar d-separados:
+
+6. h _||_ n
+
+```{r, eval=TRUE}
+dseparated(over, "h", "n", c())
+```
+Por último, una independencia entre las nauseas y la enfermedad. Si se tiene la enfermedad, no nos dice nada sobre las nauseas. Entre n y ese esta el collider d, que no es parte de la evidencia y la cadena f que tampoco lo es, por lo que deben estar d-separados:
+
+```{r, eval=TRUE}
+dseparated(over, "n", "s", c())
+```
+
+7. n _||_ s
 
 # Segunda Parte: Elaboración de Código<a name="id5"></a>
 En la siguiente sección deberá resolver cada uno de los experimentos computacionales a través de la programación en R. Para esto se le aconseja que cree funciones en R, ya que le facilitará la ejecución de gran parte de lo solicitado.
